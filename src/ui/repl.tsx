@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { render, Text, Box, useInput, useApp, Static } from 'ink';
+import { render, Text, Box, useInput, useApp } from 'ink';
 import TextInput from 'ink-text-input';
 import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
@@ -72,7 +72,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
       <Box borderStyle="double" borderColor="orange" paddingX={2} marginBottom={1} flexDirection="column">
         <Box justifyContent="space-between">
           <Text bold color="orange">
-            FORGE ENGINE v1.2.0 🔥
+            FORGE ENGINE v1.2.1 🔥
           </Text>
           <Text color="yellow" bold>
             [STATUS: ONLINE]
@@ -88,20 +88,18 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
 
       {/* History Section */}
       <Box flexDirection="column" marginBottom={1}>
-        <Static items={history}>
-          {(msg, i) => (
-            <Box key={i} flexDirection="column" marginBottom={1}>
-              <Box>
-                <Text color={msg.role === 'user' ? 'green' : msg.role === 'error' ? 'red' : 'white'} bold>
-                  {msg.role === 'user' ? 'forge> ' : msg.role === 'error' ? 'ERROR: ' : 'ASSISTANT: '}
-                </Text>
-                <Text color={msg.role === 'user' ? 'white' : msg.role === 'error' ? 'red' : 'white'}>
-                  {msg.content}
-                </Text>
-              </Box>
+        {history.map((msg, i) => (
+          <Box key={i} flexDirection="column" marginBottom={1}>
+            <Box>
+              <Text color={msg.role === 'user' ? 'green' : msg.role === 'error' ? 'red' : 'white'} bold>
+                {msg.role === 'user' ? 'forge> ' : msg.role === 'error' ? 'ERROR: ' : 'ASSISTANT: '}
+              </Text>
+              <Text color={msg.role === 'user' ? 'white' : msg.role === 'error' ? 'red' : 'white'}>
+                {msg.content}
+              </Text>
             </Box>
-          )}
-        </Static>
+          </Box>
+        ))}
       </Box>
 
       {/* Model Selection Dropdown */}
