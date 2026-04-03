@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { render, Text, Box, useInput, useApp } from 'ink';
+import { render, Text, Box, useInput, useApp, Static } from 'ink';
 import TextInput from 'ink-text-input';
 import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
@@ -22,19 +22,23 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
   
   const outputRef = useRef('');
 
-  // Explicitly handle input for Ctrl+M and other keys
+  // UseInput for global hotkeys
   useInput((inputStr, key) => {
+    // Exit on Escape or Ctrl+C
     if (key.escape || (key.ctrl && inputStr === 'c')) {
       exit();
     }
-    // Check for Ctrl+M (which often comes as 'm' with ctrl: true)
-    if (key.ctrl && (inputStr === 'm' || inputStr === '\r')) {
+    
+    // Toggle model selection on Ctrl+M
+    // Note: In some terminals, Ctrl+M is captured as 'return' (key.return)
+    // We use a specific check for the 'm' character with ctrl key
+    if (key.ctrl && inputStr === 'm') {
       setIsSelectingModel(prev => !prev);
     }
   });
 
   const handleSubmit = async (value: string) => {
-    if (isSelectingModel) return; // Prevent submission while selecting model
+    if (isSelectingModel) return;
     if (!value.trim()) return;
     
     setInput('');
@@ -66,50 +70,58 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
   };
 
   const modelOptions = config.providers?.flatMap(p => 
-    p.models.map(m => ({ label: `${p.name}: ${m}`, value: m }))
+    p.models.map(m => ({ label: `[${p.name.toUpperCase()}] ${m}`, value: m }))
   ) || [];
 
   return (
     <Box flexDirection="column" padding={1}>
-      {/* Header Section - Forge Theme */}
+      {/* Header Section - TRUE FORGE AESTHETIC */}
       <Box borderStyle="double" borderColor="orange" paddingX={2} marginBottom={1} flexDirection="column">
         <Box justifyContent="space-between">
           <Text bold color="orange">
-            FORGE ENGINE v1.3.0 🔥
+            🔥 FORGE ENGINE v1.4.0
           </Text>
-          <Text color="yellow" bold>
-            [STATUS: ONLINE]
-          </Text>
+          <Box>
+            <Text color="yellow" bold>[CORE: </Text>
+            <Text color="red" bold>{config.model.toUpperCase()}</Text>
+            <Text color="yellow" bold>]</Text>
+          </Box>
         </Box>
-        <Box marginTop={1}>
-          <Text color="gray">CORE: </Text>
-          <Text color="red" bold>{config.model}</Text>
-          <Text color="gray"> | </Text>
-          <Text color="yellow">Ctrl+M to switch models</Text>
+        <Box marginTop={1} justifyContent="center">
+          <Text color="gray">────────────────────────────────────────────────────────────</Text>
+        </Box>
+        <Box marginTop={1} justifyContent="space-between">
+          <Text color="yellow">STATUS: <Text color="green" bold>READY</Text></Text>
+          <Text color="orange" bold>CTRL+M: SWITCH CORE</Text>
         </Box>
       </Box>
 
       {/* History Section */}
       <Box flexDirection="column" marginBottom={1}>
-        {history.map((msg, i) => (
-          <Box key={i} flexDirection="column" marginBottom={1}>
-            <Box>
-              <Text color={msg.role === 'user' ? 'green' : msg.role === 'error' ? 'red' : 'white'} bold>
-                {msg.role === 'user' ? 'forge> ' : msg.role === 'error' ? 'ERROR: ' : 'ASSISTANT: '}
-              </Text>
-              <Text color="white">
-                {msg.content}
-              </Text>
+        <Static items={history}>
+          {(msg, i) => (
+            <Box key={i} flexDirection="column" marginBottom={1}>
+              <Box>
+                <Text color={msg.role === 'user' ? 'green' : msg.role === 'error' ? 'red' : 'orange'} bold>
+                  {msg.role === 'user' ? 'USER> ' : msg.role === 'error' ? 'ERROR> ' : 'FORGE> '}
+                </Text>
+                <Text color="white">{msg.content}</Text>
+              </Box>
             </Box>
-          </Box>
-        ))}
+          )}
+        </Static>
       </Box>
 
       {/* Model Selection Dropdown */}
       {isSelectingModel && (
-        <Box borderStyle="single" borderColor="yellow" padding={1} marginBottom={1} flexDirection="column">
-          <Text bold color="yellow">SELECT CORE MODEL:</Text>
-          <SelectInput items={modelOptions} onSelect={handleModelSelect} />
+        <Box borderStyle="round" borderColor="yellow" padding={1} marginBottom={1} flexDirection="column">
+          <Text bold color="yellow">SELECT NEW CORE MODEL:</Text>
+          <Box marginTop={1}>
+            <SelectInput items={modelOptions} onSelect={handleModelSelect} />
+          </Box>
+          <Box marginTop={1}>
+            <Text color="gray">Press CTRL+M again to cancel</Text>
+          </Box>
         </Box>
       )}
 
@@ -117,11 +129,11 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
       {isProcessing && (
         <Box marginBottom={1} flexDirection="column">
           <Box>
-            <Text color="orange">
+            <Text color="orange" bold>
               <Spinner type="dots" /> FORGING RESPONSE...
             </Text>
           </Box>
-          <Box marginLeft={2} marginTop={1}>
+          <Box marginLeft={2} marginTop={1} borderStyle="single" borderColor="gray" paddingX={1}>
             <Text color="white">{currentOutput}</Text>
           </Box>
         </Box>
@@ -129,20 +141,20 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
 
       {/* Input Section */}
       {!isProcessing && !isSelectingModel && (
-        <Box>
-          <Text color="orange" bold>{'forge> '}</Text>
+        <Box borderStyle="single" borderColor="orange" paddingX={1}>
+          <Text color="orange" bold>{'FORGE> '}</Text>
           <TextInput
             value={input}
             onChange={setInput}
             onSubmit={handleSubmit}
-            placeholder="Enter prompt..."
+            placeholder="Awaiting instructions..."
           />
         </Box>
       )}
 
       {/* Footer Section */}
-      <Box marginTop={1} borderStyle="single" borderColor="gray" paddingX={1}>
-        <Text color="gray">ESC/CTRL+C: EXIT | CTRL+M: SWITCH CORE | FORGE: UNIVERSAL AI ASSISTANT</Text>
+      <Box marginTop={1} justifyContent="center">
+        <Text color="gray">ESC: EXIT | CTRL+M: CORE SELECT | FORGE: UNIVERSAL AI ASSISTANT</Text>
       </Box>
     </Box>
   );
