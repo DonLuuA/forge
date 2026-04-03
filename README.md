@@ -7,7 +7,7 @@ Forge is a high-performance, universal AI coding assistant. It's designed to be 
 Shock your terminal and get Forge running instantly with this one-liner:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DonLuuA/forge/master/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/DonLuuA/forge/main/install.sh | bash
 ```
 
 ## Supercharged Features
