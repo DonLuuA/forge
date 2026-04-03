@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { render, Text, Box, useInput, useApp, Static } from 'ink';
 import TextInput from 'ink-text-input';
 import SelectInput from 'ink-select-input';
@@ -24,6 +24,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
   const { exit } = useApp();
   
   const outputRef = useRef('');
+  const scrollRef = useRef<number>(0);
 
   useInput((inputStr, key) => {
     if (key.escape || (key.ctrl && inputStr === 'c')) {
@@ -118,8 +119,11 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
     p.models.map(m => ({ label: `[${p.name.toUpperCase()}] ${m}`, value: m }))
   ) || [];
 
+  // Viewport management: Keep only the last 10 messages in the scrollable area to prevent header push
+  const visibleHistory = history.slice(-10);
+
   return (
-    <Box flexDirection="column" height="100%">
+    <Box flexDirection="column" height={30}>
       {/* FIXED HEADER - BRONZE INDUSTRIAL DASHBOARD */}
       <Box borderStyle="double" borderColor={bronzeColor} paddingX={2} flexDirection="column" flexShrink={0}>
         <Box justifyContent="space-between">
@@ -140,7 +144,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
               {" | |   | |__| | | \\ \\| |__| | |____ "}
             </Text>
             <Text bold color={bronzeColor}>
-              {" |_|    \\____/|_|  \\_\\\\_____|______| v1.9.0 🔥"}
+              {" |_|    \\____/|_|  \\_\\\\_____|______| v2.0.0 🔥"}
             </Text>
           </Box>
           <Box flexDirection="column" alignItems="flex-end">
@@ -162,9 +166,9 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
         </Box>
       </Box>
 
-      {/* SCROLLABLE CHAT AREA */}
-      <Box flexDirection="column" flexGrow={1} paddingX={2} marginTop={1}>
-        <Static items={history}>
+      {/* SCROLLABLE CHAT VIEWPORT (FIXED HEIGHT) */}
+      <Box flexDirection="column" flexGrow={1} paddingX={2} marginTop={1} overflow="hidden">
+        <Static items={visibleHistory}>
           {(msg, i) => (
             <Box key={i} flexDirection="column" marginBottom={1}>
               <Box>
