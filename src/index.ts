@@ -19,7 +19,7 @@ const configManager = new ConfigManager();
 program
   .name('forge')
   .description('A high-performance, universal AI coding assistant.')
-  .version('2.0.0');
+  .version('2.1.0');
 
 // Update command
 program
@@ -70,7 +70,7 @@ program
     };
 
     if (prompt) {
-      console.log(chalk.cyan(`\nFORGE ENGINE v2.0.0 🔥 - Using model: ${config.model}`));
+      console.log(chalk.cyan(`\nFORGE ENGINE v2.1.0 🔥 - Using model: ${config.model}`));
       await agent.run(prompt, (update) => process.stdout.write(update));
       console.log('\n');
     }

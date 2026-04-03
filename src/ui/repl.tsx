@@ -21,10 +21,18 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
   const [isSelectingModel, setIsSelectingModel] = useState(false);
   const [isPromptingKey, setIsPromptingKey] = useState(false);
   const [pendingProvider, setPendingProvider] = useState('');
+  const [terminalHeight, setTerminalHeight] = useState(process.stdout.rows || 30);
   const { exit } = useApp();
   
   const outputRef = useRef('');
-  const scrollRef = useRef<number>(0);
+
+  useEffect(() => {
+    const handleResize = () => setTerminalHeight(process.stdout.rows || 30);
+    process.stdout.on('resize', handleResize);
+    return () => {
+      process.stdout.off('resize', handleResize);
+    };
+  }, []);
 
   useInput((inputStr, key) => {
     if (key.escape || (key.ctrl && inputStr === 'c')) {
@@ -119,32 +127,32 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
     p.models.map(m => ({ label: `[${p.name.toUpperCase()}] ${m}`, value: m }))
   ) || [];
 
-  // Viewport management: Keep only the last 10 messages in the scrollable area to prevent header push
-  const visibleHistory = history.slice(-10);
+  // Strictly manage the chat viewport height to prevent header push
+  const headerHeight = 10;
+  const footerHeight = 6;
+  const chatHeight = terminalHeight - headerHeight - footerHeight;
+  const visibleHistory = history.slice(-Math.max(1, Math.floor(chatHeight / 2)));
 
   return (
-    <Box flexDirection="column" height={30}>
-      {/* FIXED HEADER - BRONZE INDUSTRIAL DASHBOARD */}
-      <Box borderStyle="double" borderColor={bronzeColor} paddingX={2} flexDirection="column" flexShrink={0}>
+    <Box flexDirection="column" height={terminalHeight} width="100%">
+      {/* FIXED HEADER - MACHINED BRONZE DASHBOARD */}
+      <Box borderStyle="double" borderColor={bronzeColor} paddingX={2} flexDirection="column" flexShrink={0} height={headerHeight}>
         <Box justifyContent="space-between">
           <Box flexDirection="column">
             <Text bold color={bronzeColor}>
-              {"  ______ ____  _____   _____ ______ "}
+              {"  ▓▓▓▓▓▓ ▓▓▓▓  ▓▓▓▓▓   ▓▓▓▓▓ ▓▓▓▓▓▓ "}
             </Text>
             <Text bold color={bronzeColor}>
-              {" |  ____/ __ \\|  __ \\ / ____|  ____|"}
+              {" ▓▓      ▓▓  ▓▓ ▓▓  ▓▓ ▓▓     ▓▓     "}
             </Text>
             <Text bold color={bronzeColor}>
-              {" | |__ | |  | | |__) | |  __| |__   "}
+              {" ▓▓▓▓▓   ▓▓  ▓▓ ▓▓▓▓▓  ▓▓ ▓▓▓ ▓▓▓▓▓  "}
             </Text>
             <Text bold color={bronzeColor}>
-              {" |  __|| |  | |  _  /| | |_ |  __|  "}
+              {" ▓▓      ▓▓  ▓▓ ▓▓  ▓▓ ▓▓  ▓▓ ▓▓     "}
             </Text>
             <Text bold color={bronzeColor}>
-              {" | |   | |__| | | \\ \\| |__| | |____ "}
-            </Text>
-            <Text bold color={bronzeColor}>
-              {" |_|    \\____/|_|  \\_\\\\_____|______| v2.0.0 🔥"}
+              {" ▓▓       ▓▓▓▓  ▓▓  ▓▓  ▓▓▓▓▓ ▓▓▓▓▓▓ v2.1.0 🔥"}
             </Text>
           </Box>
           <Box flexDirection="column" alignItems="flex-end">
@@ -162,12 +170,12 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
           </Box>
         </Box>
         <Box marginTop={1} justifyContent="center">
-          <Text color="gray">⬡────────────────────────────────────────────────────────────⬡</Text>
+          <Text color="gray">▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒</Text>
         </Box>
       </Box>
 
-      {/* SCROLLABLE CHAT VIEWPORT (FIXED HEIGHT) */}
-      <Box flexDirection="column" flexGrow={1} paddingX={2} marginTop={1} overflow="hidden">
+      {/* SCROLLABLE CHAT VIEWPORT (STRICT HEIGHT) */}
+      <Box flexDirection="column" flexGrow={1} paddingX={2} marginTop={1} height={chatHeight} overflow="hidden">
         <Static items={visibleHistory}>
           {(msg, i) => (
             <Box key={i} flexDirection="column" marginBottom={1}>
@@ -181,7 +189,6 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
           )}
         </Static>
 
-        {/* Processing Indicator */}
         {isProcessing && (
           <Box flexDirection="column" marginTop={1}>
             <Box>
@@ -197,7 +204,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
       </Box>
 
       {/* FIXED FOOTER - INPUT AREA */}
-      <Box borderStyle="single" borderColor={bronzeColor} paddingX={1} flexShrink={0} marginTop={1}>
+      <Box borderStyle="single" borderColor={bronzeColor} paddingX={1} flexShrink={0} height={footerHeight} marginTop={1}>
         {isSelectingModel ? (
           <Box flexDirection="column">
             <Text bold color="yellow">SELECT NEW CORE MODEL (GROQ/GEMINI/OPENAI):</Text>
