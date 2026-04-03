@@ -19,43 +19,9 @@ const configManager = new ConfigManager();
 program
   .name('forge')
   .description('A high-performance, universal AI coding assistant.')
-  .version('1.1.0');
+  .version('1.1.1');
 
-program
-  .command('chat')
-  .description('Start an interactive chat session.')
-  .argument('[prompt]', 'Initial prompt to start the session.')
-  .action(async (prompt) => {
-    // Auto-configure for local models and other providers
-    await configManager.autoConfigure();
-
-    if (!configManager.validate()) {
-      console.error(chalk.red('Error: API key or base URL is missing. Please set FORGE_API_KEY and FORGE_BASE_URL in your environment.'));
-      process.exit(1);
-    }
-
-    const config = configManager.getConfig();
-    const model = new ModelAdapter(config);
-    const session = new SessionManager();
-    const agent = new AgentLoop(model, session);
-
-    // Callback for model switching
-    const onModelChange = (newModel: string) => {
-      configManager.switchModel(newModel);
-      const updatedConfig = configManager.getConfig();
-      model.updateConfig(updatedConfig);
-      console.log(chalk.yellow(`\nModel switched to: ${newModel}`));
-    };
-
-    if (prompt) {
-      console.log(chalk.cyan(`\nFORGE CLI v1.1.0 🔥 - Using model: ${config.model}`));
-      await agent.run(prompt, (update) => process.stdout.write(update));
-      console.log('\n');
-    }
-
-    startREPL(agent, config, onModelChange);
-  });
-
+// Update command - defined BEFORE chat to ensure it can run without model init
 program
   .command('update')
   .description('Self-update the Forge CLI to the latest version from GitHub.')
@@ -84,6 +50,41 @@ program
       console.error(chalk.red('Error during update:'), error instanceof Error ? error.message : error);
       console.log(chalk.yellow('Manual update suggestion: cd to your forge directory and run git pull && npm install && npm run build'));
     }
+  });
+
+program
+  .command('chat')
+  .description('Start an interactive chat session.')
+  .argument('[prompt]', 'Initial prompt to start the session.')
+  .action(async (prompt) => {
+    // Auto-configure for local models and other providers
+    await configManager.autoConfigure();
+
+    if (!configManager.validate()) {
+      console.error(chalk.red('Error: API key or base URL is missing. Please set FORGE_API_KEY and FORGE_BASE_URL in your environment.'));
+      process.exit(1);
+    }
+
+    const config = configManager.getConfig();
+    const model = new ModelAdapter(config);
+    const session = new SessionManager();
+    const agent = new AgentLoop(model, session);
+
+    // Callback for model switching
+    const onModelChange = (newModel: string) => {
+      configManager.switchModel(newModel);
+      const updatedConfig = configManager.getConfig();
+      model.updateConfig(updatedConfig);
+      console.log(chalk.yellow(`\nModel switched to: ${newModel}`));
+    };
+
+    if (prompt) {
+      console.log(chalk.cyan(`\nFORGE CLI v1.1.1 🔥 - Using model: ${config.model}`));
+      await agent.run(prompt, (update) => process.stdout.write(update));
+      console.log('\n');
+    }
+
+    startREPL(agent, config, onModelChange);
   });
 
 program.parse(process.argv);
