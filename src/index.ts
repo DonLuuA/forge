@@ -19,7 +19,7 @@ const configManager = new ConfigManager();
 program
   .name('forge')
   .description('A high-performance, universal AI coding assistant.')
-  .version('2.1.0');
+  .version('2.5.0');
 
 // Update command
 program
@@ -70,7 +70,9 @@ program
     };
 
     if (prompt) {
-      console.log(chalk.cyan(`\nFORGE ENGINE v2.1.0 🔥 - Using model: ${config.model}`));
+      console.log(chalk.hex('#CD7F32').bold(`\n⚒ OPEN FORGE v2.5.0 - CAPABLE AGENT 🔥`));
+      console.log(chalk.gray(`CORE: ${config.model} | STATUS: READY`));
+      console.log(chalk.cyan('👐 HANDS: ENABLED ') + chalk.magenta('👁 VISION: ACTIVE\n'));
       await agent.run(prompt, (update) => process.stdout.write(update));
       console.log('\n');
     }

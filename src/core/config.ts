@@ -14,7 +14,7 @@ export class ConfigManager {
       model: process.env.FORGE_MODEL || 'gpt-4o',
       temperature: parseFloat(process.env.FORGE_TEMPERATURE || '0.7'),
       maxTokens: parseInt(process.env.FORGE_MAX_TOKENS || '4096'),
-      systemPrompt: process.env.FORGE_SYSTEM_PROMPT || 'You are Forge, a high-performance AI coding assistant. You can run shell commands, read/write files, and solve complex coding tasks. Always plan before you act.',
+      systemPrompt: process.env.FORGE_SYSTEM_PROMPT || 'You are Open Forge, a highly capable and autonomous AI agent. Your hands (tools) and vision (browser) enable you to interact with the world and solve complex tasks. You can run shell commands, manage files, and navigate the web. Always plan before you act, and communicate your progress clearly.',
       providers: []
     };
   }

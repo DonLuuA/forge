@@ -51,7 +51,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
       setIsPromptingKey(false);
       setPendingProvider('');
       setInput('');
-      setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] API Key updated for ${pendingProvider}. Core is now active.` }]);
+      setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] API Key updated for ${pendingProvider}. Forge is now active.` }]);
       return;
     }
 
@@ -98,7 +98,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
         setPendingProvider(provider.name);
         setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] Switching to ${provider.name}. Please provide your API Key:` }]);
       } else {
-        setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] Core model switched to: ${modelName}` }]);
+        setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] Forge core switched to: ${modelName}` }]);
       }
     } else {
       setHistory(prev => [...prev, { role: 'error', content: `Model "${modelName}" not found in registry.` }]);
@@ -128,9 +128,9 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
   ) || [];
 
   // STRICT LAYOUT DIMENSIONS
-  const headerHeight = 6;
-  const footerHeight = 3;
-  const chatHeight = Math.max(5, terminalHeight - headerHeight - footerHeight - 3);
+  const headerHeight = 10;
+  const footerHeight = 4;
+  const chatHeight = Math.max(5, terminalHeight - headerHeight - footerHeight - 2);
   
   // Sliding window: show only the last N messages that fit
   const maxMessagesPerView = Math.floor(chatHeight / 2);
@@ -138,69 +138,101 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
 
   return (
     <Box flexDirection="column" height={terminalHeight} width="100%">
-      {/* FIXED HEADER - CLEAN MACHINED LOOK */}
-      <Box borderStyle="round" borderColor={bronzeColor} paddingX={1} paddingY={0} flexShrink={0}>
+      {/* OPEN FORGE CLI HEADER */}
+      <Box borderStyle="double" borderColor={bronzeColor} paddingX={2} paddingY={0} flexDirection="column" flexShrink={0}>
         <Box justifyContent="space-between" width="100%">
-          <Box>
+          <Box flexDirection="column">
             <Text bold color={bronzeColor}>
-              ⚙ FORGE v2.2.0 🔥
+              ┌────────────────────────────────────────┐
+            </Text>
+            <Text bold color={bronzeColor}>
+              │  ⚒  OPEN FORGE v2.5.0 - CAPABLE AGENT  │
+            </Text>
+            <Text bold color={bronzeColor}>
+              └────────────────────────────────────────┘
             </Text>
           </Box>
+          <Box flexDirection="column" alignItems="flex-end">
+            <Box>
+              <Text color="gray">CORE: </Text>
+              <Text color={coreColor} bold>{config.model}</Text>
+            </Box>
+            <Box>
+              <Text color="gray">STATUS: </Text>
+              <Text color="green" bold>READY</Text>
+            </Box>
+          </Box>
+        </Box>
+        <Box marginTop={0} justifyContent="space-between">
           <Box>
-            <Text color="yellow">[CORE: </Text>
-            <Text color={coreColor} bold>{config.model}</Text>
-            <Text color="yellow">]</Text>
+            <Text color="cyan" bold>👐 HANDS: </Text>
+            <Text color="white">ENABLED </Text>
+            <Text color="magenta" bold>👁 VISION: </Text>
+            <Text color="white">ACTIVE</Text>
+          </Box>
+          <Box>
+            <Text color="gray" dimColor>CTRL+M to switch models</Text>
           </Box>
         </Box>
       </Box>
 
-      {/* CHAT VIEWPORT - STRICTLY BOUNDED */}
-      <Box flexDirection="column" height={chatHeight} paddingX={1} paddingY={0} overflow="hidden">
+      {/* CHAT VIEWPORT */}
+      <Box flexDirection="column" height={chatHeight} paddingX={2} paddingY={1} overflow="hidden">
+        {visibleHistory.length === 0 && !isProcessing && (
+          <Box flexDirection="column" alignItems="center" justifyContent="center" height="100%">
+            <Text color="gray" italic>The forge is cold. Enter a command to begin crafting...</Text>
+          </Box>
+        )}
+        
         {visibleHistory.map((msg, i) => (
-          <Box key={i} flexDirection="column" marginBottom={0}>
-            <Text>
+          <Box key={i} flexDirection="column" marginBottom={1}>
+            <Box>
               <Text color={msg.role === 'user' ? 'green' : msg.role === 'error' ? 'red' : coreColor} bold>
-                {msg.role === 'user' ? '❯ ' : msg.role === 'error' ? '✗ ' : '◆ '}
+                {msg.role === 'user' ? 'USER ❯ ' : msg.role === 'error' ? 'ERROR ✗ ' : 'FORGE ◆ '}
               </Text>
-              <Text color="white">{msg.content.slice(0, 120)}</Text>
-            </Text>
+            </Box>
+            <Box paddingLeft={2}>
+              <Text color="white">{msg.content}</Text>
+            </Box>
           </Box>
         ))}
 
         {isProcessing && (
-          <Box flexDirection="column" marginTop={0}>
+          <Box flexDirection="column" marginTop={1}>
             <Text color={coreColor} bold>
               <Spinner type="dots" /> FORGING...
             </Text>
-            <Text color="gray">{currentOutput.slice(-100)}</Text>
+            <Box paddingLeft={2}>
+              <Text color="gray">{currentOutput}</Text>
+            </Box>
           </Box>
         )}
       </Box>
 
-      {/* FIXED FOOTER - INPUT AREA */}
-      <Box borderStyle="round" borderColor={bronzeColor} paddingX={1} paddingY={0} flexShrink={0} height={footerHeight}>
+      {/* FOOTER - INPUT AREA */}
+      <Box borderStyle="round" borderColor={bronzeColor} paddingX={2} paddingY={0} flexShrink={0} height={footerHeight}>
         {isSelectingModel ? (
-          <Box flexDirection="column">
+          <Box flexDirection="column" width="100%">
             <Text bold color="yellow">SELECT MODEL (CTRL+M to cancel):</Text>
             <SelectInput items={modelOptions} onSelect={handleModelSelect} />
           </Box>
         ) : (
-          <Box>
+          <Box width="100%">
             <Text color={coreColor} bold>{isPromptingKey ? 'KEY> ' : 'FORGE> '}</Text>
             <TextInput
               value={input}
               onChange={setInput}
               onSubmit={handleSubmit}
-              placeholder={isPromptingKey ? `Enter ${pendingProvider} API Key...` : "Type command..."}
+              placeholder={isPromptingKey ? `Enter ${pendingProvider} API Key...` : "What shall we build today?"}
               mask={isPromptingKey ? "*" : undefined}
             />
           </Box>
         )}
       </Box>
 
-      {/* HELP LINE */}
-      <Box justifyContent="center" flexShrink={0}>
-        <Text color="gray" dimColor>ESC: EXIT | CTRL+M: MODEL | /model [name]: SWITCH</Text>
+      {/* QUICK HELP */}
+      <Box justifyContent="center" flexShrink={0} marginBottom={0}>
+        <Text color="gray" dimColor>ESC: EXIT | CTRL+M: MODELS | /model [name]: QUICK SWITCH</Text>
       </Box>
     </Box>
   );
