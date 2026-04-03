@@ -27,7 +27,7 @@ export class ConfigManager {
       name: 'OpenAI',
       baseUrl: 'https://api.openai.com/v1',
       apiKey: process.env.OPENAI_API_KEY || '',
-      models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
+      models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'o1-preview', 'o1-mini'],
       isActive: false
     });
 
@@ -36,11 +36,20 @@ export class ConfigManager {
       name: 'Gemini',
       baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
       apiKey: process.env.GEMINI_API_KEY || '',
-      models: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash-exp'],
+      models: ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-1.5-flash'],
       isActive: false
     });
 
-    // 3. Check for local Ollama
+    // 3. Hard-Wired Groq (Always Available)
+    providers.push({
+      name: 'Groq',
+      baseUrl: 'https://api.groq.com/openai/v1',
+      apiKey: process.env.GROQ_API_KEY || '',
+      models: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', 'gemma2-9b-it'],
+      isActive: false
+    });
+
+    // 4. Check for local Ollama
     const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
     const ollamaModels = await ModelAdapter.fetchOllamaModels(ollamaUrl);
     if (ollamaModels.length > 0) {
@@ -77,7 +86,6 @@ export class ConfigManager {
   }
 
   switchModel(modelName: string) {
-    // Find provider that contains this model
     const provider = this.config.providers?.find(p => p.models.includes(modelName));
     if (provider) {
       this.config.baseUrl = provider.baseUrl;

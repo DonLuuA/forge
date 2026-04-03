@@ -101,14 +101,14 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
     handleModelSwitch(item.value);
   };
 
-  // BRONZE INDUSTRIAL THEME
-  const bronzeColor = "#CD7F32"; // Bronze Hex
+  const bronzeColor = "#CD7F32";
   const getCoreColor = () => {
     const provider = config.providers?.find(p => p.isActive);
     switch (provider?.name) {
       case 'Ollama': return 'orange';
       case 'Gemini': return 'blue';
       case 'OpenAI': return 'green';
+      case 'Groq': return 'magenta';
       default: return bronzeColor;
     }
   };
@@ -140,7 +140,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
               {" | |   | |__| | | \\ \\| |__| | |____ "}
             </Text>
             <Text bold color={bronzeColor}>
-              {" |_|    \\____/|_|  \\_\\\\_____|______| v1.8.0 🔥"}
+              {" |_|    \\____/|_|  \\_\\\\_____|______| v1.9.0 🔥"}
             </Text>
           </Box>
           <Box flexDirection="column" alignItems="flex-end">
@@ -196,7 +196,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
       <Box borderStyle="single" borderColor={bronzeColor} paddingX={1} flexShrink={0} marginTop={1}>
         {isSelectingModel ? (
           <Box flexDirection="column">
-            <Text bold color="yellow">SELECT NEW CORE MODEL:</Text>
+            <Text bold color="yellow">SELECT NEW CORE MODEL (GROQ/GEMINI/OPENAI):</Text>
             <SelectInput items={modelOptions} onSelect={handleModelSelect} />
           </Box>
         ) : (

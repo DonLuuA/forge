@@ -12,14 +12,14 @@ export class ModelAdapter {
   }
 
   private createClient(config: Config): OpenAI {
-    // Handle Gemini specifically if the baseUrl is for Google
     const isGemini = config.baseUrl.includes('generativelanguage.googleapis.com');
+    const isGroq = config.baseUrl.includes('api.groq.com');
     
     return new OpenAI({
       apiKey: config.apiKey,
       baseURL: config.baseUrl,
-      // Gemini requires a specific header if using OpenAI-compatible endpoint
       defaultHeaders: isGemini ? { 'x-goog-api-key': config.apiKey } : undefined,
+      // Groq is OpenAI-compatible, but we ensure the client is fresh
     });
   }
 
@@ -50,15 +50,13 @@ export class ModelAdapter {
       };
     } catch (error: any) {
       const provider = this.config.baseUrl.includes('localhost') ? 'Ollama' : 
-                       this.config.baseUrl.includes('googleapis') ? 'Gemini' : 'OpenAI';
+                       this.config.baseUrl.includes('googleapis') ? 'Gemini' : 
+                       this.config.baseUrl.includes('groq.com') ? 'Groq' : 'OpenAI';
       console.error(`Error calling ${provider} model ${this.config.model}:`, error.message);
       throw error;
     }
   }
 
-  /**
-   * Fetches available models from an Ollama instance.
-   */
   static async fetchOllamaModels(url: string): Promise<string[]> {
     try {
       const response = await axios.get(`${url}/api/tags`, { timeout: 2000 });
@@ -71,9 +69,6 @@ export class ModelAdapter {
     }
   }
 
-  /**
-   * Fetches available models from an OpenAI-compatible API.
-   */
   static async fetchOpenAIModels(url: string, apiKey: string): Promise<string[]> {
     if (!apiKey) return [];
     try {
