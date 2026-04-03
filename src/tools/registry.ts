@@ -36,7 +36,7 @@ export class ToolRegistry {
     return Array.from(this.tools.values()).map(t => t.definition);
   }
 
-  routePrompt(prompt: string, limit: number = 5): ToolDefinition[] {
+  routePrompt(prompt: string, limit: number = 8): ToolDefinition[] {
     const tokens = prompt.toLowerCase().split(/\s+/);
     const scored = Array.from(this.tools.values()).map(tool => {
       let score = 0;
@@ -51,6 +51,10 @@ export class ToolRegistry {
         if (haystacks.some(h => h.includes(token))) {
           score += 1;
         }
+      }
+      // Force vision/browser if keyword present
+      if (prompt.toLowerCase().includes('vision') || prompt.toLowerCase().includes('screenshot') || prompt.toLowerCase().includes('website')) {
+        if (tool.definition.name === 'browser_operation') score += 10;
       }
       return { tool, score };
     });

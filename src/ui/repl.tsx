@@ -127,32 +127,25 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
     p.models.map(m => ({ label: `[${p.name.toUpperCase()}] ${m}`, value: m }))
   ) || [];
 
-  // Strictly manage the chat viewport height to prevent header push
-  const headerHeight = 10;
-  const footerHeight = 6;
-  const chatHeight = terminalHeight - headerHeight - footerHeight;
+  // FIXED DIMENSIONS
+  const headerHeight = 8;
+  const footerHeight = 4;
+  const chatHeight = terminalHeight - headerHeight - footerHeight - 2;
+  
+  // Display only what fits in the viewport
   const visibleHistory = history.slice(-Math.max(1, Math.floor(chatHeight / 2)));
 
   return (
     <Box flexDirection="column" height={terminalHeight} width="100%">
-      {/* FIXED HEADER - MACHINED BRONZE DASHBOARD */}
+      {/* FIXED HEADER */}
       <Box borderStyle="double" borderColor={bronzeColor} paddingX={2} flexDirection="column" flexShrink={0} height={headerHeight}>
         <Box justifyContent="space-between">
           <Box flexDirection="column">
             <Text bold color={bronzeColor}>
-              {"  ▓▓▓▓▓▓ ▓▓▓▓  ▓▓▓▓▓   ▓▓▓▓▓ ▓▓▓▓▓▓ "}
+              {" ▓▓▓▓▓▓ ▓▓▓▓  ▓▓▓▓▓   ▓▓▓▓▓ ▓▓▓▓▓▓ "}
             </Text>
             <Text bold color={bronzeColor}>
-              {" ▓▓      ▓▓  ▓▓ ▓▓  ▓▓ ▓▓     ▓▓     "}
-            </Text>
-            <Text bold color={bronzeColor}>
-              {" ▓▓▓▓▓   ▓▓  ▓▓ ▓▓▓▓▓  ▓▓ ▓▓▓ ▓▓▓▓▓  "}
-            </Text>
-            <Text bold color={bronzeColor}>
-              {" ▓▓      ▓▓  ▓▓ ▓▓  ▓▓ ▓▓  ▓▓ ▓▓     "}
-            </Text>
-            <Text bold color={bronzeColor}>
-              {" ▓▓       ▓▓▓▓  ▓▓  ▓▓  ▓▓▓▓▓ ▓▓▓▓▓▓ v2.1.0 🔥"}
+              {" ▓▓▓▓   ▓▓  ▓▓ ▓▓  ▓▓ ▓▓ ▓▓▓ ▓▓▓▓   v2.1.0 🔥"}
             </Text>
           </Box>
           <Box flexDirection="column" alignItems="flex-end">
@@ -161,11 +154,8 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
               <Text color={coreColor} bold>{config.model.toUpperCase()}</Text>
               <Text color="yellow" bold>]</Text>
             </Box>
-            <Box marginTop={1}>
+            <Box>
               <Text color="yellow">STATUS: <Text color="green" bold>ONLINE</Text></Text>
-            </Box>
-            <Box marginTop={1}>
-              <Text color={bronzeColor} bold>TYPE /model [name] TO SWITCH</Text>
             </Box>
           </Box>
         </Box>
@@ -174,8 +164,8 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
         </Box>
       </Box>
 
-      {/* SCROLLABLE CHAT VIEWPORT (STRICT HEIGHT) */}
-      <Box flexDirection="column" flexGrow={1} paddingX={2} marginTop={1} height={chatHeight} overflow="hidden">
+      {/* CHAT VIEWPORT */}
+      <Box flexDirection="column" flexGrow={1} paddingX={2} height={chatHeight} overflow="hidden">
         <Static items={visibleHistory}>
           {(msg, i) => (
             <Box key={i} flexDirection="column" marginBottom={1}>
@@ -193,21 +183,21 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
           <Box flexDirection="column" marginTop={1}>
             <Box>
               <Text color={coreColor} bold>
-                <Spinner type="dots" /> FORGING RESPONSE...
+                <Spinner type="dots" /> FORGING...
               </Text>
             </Box>
-            <Box marginLeft={2} marginTop={1} borderStyle="single" borderColor="gray" paddingX={1}>
-              <Text color="white">{currentOutput}</Text>
+            <Box marginLeft={2} borderStyle="single" borderColor="gray" paddingX={1}>
+              <Text color="white">{currentOutput.slice(-200)}</Text>
             </Box>
           </Box>
         )}
       </Box>
 
-      {/* FIXED FOOTER - INPUT AREA */}
-      <Box borderStyle="single" borderColor={bronzeColor} paddingX={1} flexShrink={0} height={footerHeight} marginTop={1}>
+      {/* FIXED FOOTER */}
+      <Box borderStyle="single" borderColor={bronzeColor} paddingX={1} flexShrink={0} height={footerHeight}>
         {isSelectingModel ? (
           <Box flexDirection="column">
-            <Text bold color="yellow">SELECT NEW CORE MODEL (GROQ/GEMINI/OPENAI):</Text>
+            <Text bold color="yellow">SELECT CORE MODEL:</Text>
             <SelectInput items={modelOptions} onSelect={handleModelSelect} />
           </Box>
         ) : (
@@ -225,7 +215,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
       </Box>
       
       <Box justifyContent="center" flexShrink={0}>
-        <Text color="gray">ESC: EXIT | /model [name]: SWITCH CORE | CTRL+M: MENU</Text>
+        <Text color="gray">ESC: EXIT | CTRL+M: MENU | /model [name]: SWITCH</Text>
       </Box>
     </Box>
   );

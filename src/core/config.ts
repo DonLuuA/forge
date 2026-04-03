@@ -22,30 +22,36 @@ export class ConfigManager {
   async autoConfigure() {
     const providers: ProviderConfig[] = [];
 
-    // 1. Hard-Wired OpenAI (Always Available)
+    // 1. OpenAI
+    const openAIApiKey = process.env.OPENAI_API_KEY || '';
+    const openAIModels = await ModelAdapter.fetchOpenAIModels('https://api.openai.com/v1', openAIApiKey);
     providers.push({
       name: 'OpenAI',
       baseUrl: 'https://api.openai.com/v1',
-      apiKey: process.env.OPENAI_API_KEY || '',
-      models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'o1-preview', 'o1-mini'],
+      apiKey: openAIApiKey,
+      models: openAIModels.length > 0 ? openAIModels : ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'o1-preview', 'o1-mini'],
       isActive: false
     });
 
-    // 2. Hard-Wired Gemini (Always Available)
+    // 2. Gemini
+    const geminiApiKey = process.env.GEMINI_API_KEY || '';
+    const geminiModels = await ModelAdapter.fetchOpenAIModels('https://generativelanguage.googleapis.com/v1beta/openai/', geminiApiKey);
     providers.push({
       name: 'Gemini',
       baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-      apiKey: process.env.GEMINI_API_KEY || '',
-      models: ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-1.5-flash'],
+      apiKey: geminiApiKey,
+      models: geminiModels.length > 0 ? geminiModels : ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-1.5-flash'],
       isActive: false
     });
 
-    // 3. Hard-Wired Groq (Always Available)
+    // 3. Groq
+    const groqApiKey = process.env.GROQ_API_KEY || '';
+    const groqModels = await ModelAdapter.fetchOpenAIModels('https://api.groq.com/openai/v1', groqApiKey);
     providers.push({
       name: 'Groq',
       baseUrl: 'https://api.groq.com/openai/v1',
-      apiKey: process.env.GROQ_API_KEY || '',
-      models: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', 'gemma2-9b-it'],
+      apiKey: groqApiKey,
+      models: groqModels.length > 0 ? groqModels : ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', 'gemma2-9b-it'],
       isActive: false
     });
 
