@@ -1,58 +1,39 @@
-# OmniCode 🚀
+# Forge 🔥
 
-OmniCode is a powerful, model-agnostic command-line AI coding assistant. Inspired by Claude Code but built for flexibility, OmniCode allows you to plug in any LLM with an OpenAI-compatible API.
+Forge is a high-performance, universal AI coding assistant. It's designed to be instantly ready, model-agnostic, and powerful enough to handle complex coding tasks directly from your terminal.
+
+## ⚡ Instant Install
+
+Shock your terminal and get Forge running instantly with this one-liner:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DonLuuA/forge/master/install.sh | bash
+```
 
 ## Features
 
-- **Model Agnostic**: Use GPT-4o, Gemini, DeepSeek, Groq, Mistral, or local models via Ollama/LM Studio.
-- **Powerful Tools**: Execute shell commands, read/write files, perform git operations, and search codebases.
-- **Agentic Loop**: Multi-step reasoning and tool execution to solve complex tasks.
-- **Context Compression**: Efficiently manages conversation history by summarizing older messages to stay within context window limits.
-- **TypeScript Powered**: Built with modern TypeScript for reliability and performance.
-
-## Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/DonLuuA/omnicode.git
-cd omnicode
-
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-
-# Link globally (optional)
-npm link
-```
+- **Universal Model Support**: Plug in any LLM (OpenAI, Anthropic, DeepSeek, Groq, Mistral).
+- **Local-First**: Auto-detects and configures for local models running via Ollama or LM Studio.
+- **Agentic Intelligence**: Multi-step planning, self-healing diagnostics, and tool execution.
+- **Context Compression**: Sophisticated session management to handle massive codebases.
+- **Zero Config**: Auto-detects your environment and local models on startup.
 
 ## Configuration
 
-Set the following environment variables in a `.env` file or your shell:
+Forge auto-configures itself, but you can override settings via environment variables:
 
 ```bash
-OMNICODE_API_KEY=your_api_key
-OMNICODE_BASE_URL=https://api.openai.com/v1
-OMNICODE_MODEL=gpt-4o
-OMNICODE_TEMPERATURE=0.7
-OMNICODE_MAX_TOKENS=4096
-OMNICODE_SYSTEM_PROMPT="You are OmniCode, a powerful AI coding assistant. You can run shell commands, read/write files, and solve complex coding tasks. Always plan before you act."
+FORGE_API_KEY=your_api_key
+FORGE_BASE_URL=https://api.openai.com/v1
+FORGE_MODEL=gpt-4o
 ```
 
 ## Usage
 
 ```bash
-omnicode chat "Refactor the login logic in src/auth.ts"
+forge chat "Create a new React component for a dashboard"
 ```
 
-## Advanced Capabilities & Future Plans
+## Why Forge?
 
-OmniCode is designed to be more than just a wrapper. It includes:
-- **Self-Healing Diagnostics**: Automatically run tests/linters after edits and fix errors in a loop.
-- **Multi-Step Planning**: Breaks down complex requests into actionable plans.
-- **Codebase Indexing**: Use vector embeddings (local or API) to index the codebase for better context retrieval.
-- **Streaming UI**: Rich terminal interface with streaming responses and interactive tool confirmations.
-- **Git Integration**: Automatic branch management and commit generation for tasks.
-- **Checkpoints**: Save and restore agent state for long-running tasks.
-- **Multi-file Editing**: Coordinate changes across multiple files seamlessly.
+Forge isn't just another CLI tool; it's a developer's power-up. It understands your local environment, respects your choice of models, and executes tasks with precision. Whether you're using a cloud-based giant or a local specialist, Forge gets to work instantly.

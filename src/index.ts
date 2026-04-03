@@ -10,8 +10,8 @@ const program = new Command();
 const configManager = new ConfigManager();
 
 program
-  .name('omnicode')
-  .description('A powerful, model-agnostic AI coding assistant.')
+  .name('forge')
+  .description('A high-performance, universal AI coding assistant.')
   .version('1.0.0');
 
 program
@@ -19,8 +19,11 @@ program
   .description('Start an interactive chat session.')
   .argument('[prompt]', 'Initial prompt to start the session.')
   .action(async (prompt) => {
+    // Auto-configure for local models
+    await configManager.autoConfigure();
+
     if (!configManager.validate()) {
-      console.error(chalk.red('Error: API key or base URL is missing. Please set OMNICODE_API_KEY and OMNICODE_BASE_URL in your environment.'));
+      console.error(chalk.red('Error: API key or base URL is missing. Please set FORGE_API_KEY and FORGE_BASE_URL in your environment.'));
       process.exit(1);
     }
 
@@ -29,7 +32,7 @@ program
     const session = new SessionManager();
     const agent = new AgentLoop(model, session);
 
-    console.log(chalk.blue(`OmniCode v1.0.0 - Using model: ${config.model}`));
+    console.log(chalk.blue(`Forge v1.0.0 - Using model: ${config.model}`));
     console.log(chalk.gray('Type "exit" to quit.\n'));
 
     if (prompt) {
@@ -39,7 +42,7 @@ program
     const readline = createInterface({
       input: process.stdin,
       output: process.stdout,
-      prompt: chalk.green('omnicode> '),
+      prompt: chalk.green('forge> '),
     });
 
     readline.prompt();
