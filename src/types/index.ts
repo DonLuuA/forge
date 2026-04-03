@@ -8,6 +8,15 @@ export interface Config {
   maxTurns?: number;
   maxBudgetTokens?: number;
   compactAfterTurns?: number;
+  providers?: ProviderConfig[];
+}
+
+export interface ProviderConfig {
+  name: string;
+  baseUrl: string;
+  apiKey: string;
+  models: string[];
+  isActive: boolean;
 }
 
 export interface Message {

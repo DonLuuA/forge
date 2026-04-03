@@ -13,14 +13,14 @@ const configManager = new ConfigManager();
 program
   .name('forge')
   .description('A high-performance, universal AI coding assistant.')
-  .version('1.0.0');
+  .version('1.1.0');
 
 program
   .command('chat')
   .description('Start an interactive chat session.')
   .argument('[prompt]', 'Initial prompt to start the session.')
   .action(async (prompt) => {
-    // Auto-configure for local models
+    // Auto-configure for local models and other providers
     await configManager.autoConfigure();
 
     if (!configManager.validate()) {
@@ -33,13 +33,21 @@ program
     const session = new SessionManager();
     const agent = new AgentLoop(model, session);
 
+    // Callback for model switching
+    const onModelChange = (newModel: string) => {
+      configManager.switchModel(newModel);
+      const updatedConfig = configManager.getConfig();
+      model.updateConfig(updatedConfig);
+      console.log(chalk.yellow(`\nModel switched to: ${newModel}`));
+    };
+
     if (prompt) {
-      console.log(chalk.blue(`Forge v1.0.0 - Using model: ${config.model}`));
+      console.log(chalk.cyan(`\nFORGE CLI v1.1.0 🔥 - Using model: ${config.model}`));
       await agent.run(prompt, (update) => process.stdout.write(update));
       console.log('\n');
     }
 
-    startREPL(agent, config);
+    startREPL(agent, config, onModelChange);
   });
 
 program.parse(process.argv);

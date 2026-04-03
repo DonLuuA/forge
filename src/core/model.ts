@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import axios from 'axios';
 import { Config, Message, ToolDefinition } from '../types/index.js';
 
 export class ModelAdapter {
@@ -6,6 +7,14 @@ export class ModelAdapter {
   private config: Config;
 
   constructor(config: Config) {
+    this.config = config;
+    this.client = new OpenAI({
+      apiKey: config.apiKey,
+      baseURL: config.baseUrl,
+    });
+  }
+
+  updateConfig(config: Config) {
     this.config = config;
     this.client = new OpenAI({
       apiKey: config.apiKey,
@@ -54,11 +63,41 @@ export class ModelAdapter {
     }
   }
 
-  // Helper to check if a local model is available (e.g., Ollama)
+  /**
+   * Fetches available models from an Ollama instance.
+   */
+  static async fetchOllamaModels(url: string): Promise<string[]> {
+    try {
+      const response = await axios.get(`${url}/api/tags`);
+      if (response.status === 200 && response.data.models) {
+        return response.data.models.map((m: any) => m.name);
+      }
+      return [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  /**
+   * Fetches available models from an OpenAI-compatible API.
+   */
+  static async fetchOpenAIModels(url: string, apiKey: string): Promise<string[]> {
+    try {
+      const client = new OpenAI({ baseURL: url, apiKey });
+      const response = await client.models.list();
+      return response.data.map(m => m.id);
+    } catch (error) {
+      return [];
+    }
+  }
+
+  /**
+   * Checks if a local model is available (e.g., Ollama).
+   */
   static async checkLocalModel(url: string): Promise<boolean> {
     try {
-      const response = await fetch(`${url}/api/tags`);
-      return response.ok;
+      const response = await axios.get(`${url}/api/tags`, { timeout: 2000 });
+      return response.status === 200;
     } catch {
       return false;
     }
