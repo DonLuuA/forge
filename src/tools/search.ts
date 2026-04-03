@@ -1,5 +1,6 @@
 import fg from 'fast-glob';
 import fs from 'fs/promises';
+import axios from 'axios';
 import { ToolDefinition, ToolResult } from '../types/index.js';
 
 export const searchFilesToolDefinition: ToolDefinition = {
@@ -27,6 +28,18 @@ export const grepToolDefinition: ToolDefinition = {
   },
 };
 
+export const webSearchToolDefinition: ToolDefinition = {
+  name: 'web_search',
+  description: 'Search the web for live data, news, and real-time information.',
+  parameters: {
+    type: 'object',
+    properties: {
+      query: { type: 'string', description: 'The search query.' },
+    },
+    required: ['query'],
+  },
+};
+
 export async function searchFiles({ pattern }: { pattern: string }, toolCallId: string): Promise<ToolResult> {
   try {
     const files = await fg(pattern, { ignore: ['node_modules/**'] });
@@ -46,7 +59,6 @@ export async function grep({ pattern, path: searchPath }: { pattern: string, pat
       const stats = await fs.stat(file);
       if (stats.isFile() && stats.size < 1024 * 1024) { // Skip files larger than 1MB
         const content = await fs.readFile(file, 'utf-8');
-        // Simple check for binary content
         if (content.includes('\0')) continue;
         
         const lines = content.split('\n');
@@ -60,5 +72,16 @@ export async function grep({ pattern, path: searchPath }: { pattern: string, pat
     return { tool_call_id: toolCallId, output: results.join('\n') || 'No matches found.' };
   } catch (error: any) {
     return { tool_call_id: toolCallId, output: error.message, isError: true };
+  }
+}
+
+export async function webSearch({ query }: { query: string }, toolCallId: string): Promise<ToolResult> {
+  try {
+    // Using DuckDuckGo API for live data retrieval
+    const response = await axios.get(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json`);
+    const output = response.data.AbstractText || `No direct abstract found for "${query}". Please use the browser tool for deeper research.`;
+    return { tool_call_id: toolCallId, output: `[LIVE DATA] ${output}` };
+  } catch (error: any) {
+    return { tool_call_id: toolCallId, output: `Search Error: ${error.message}`, isError: true };
   }
 }

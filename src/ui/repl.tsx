@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { render, Text, Box, useInput, useApp, Static } from 'ink';
 import TextInput from 'ink-text-input';
 import SelectInput from 'ink-select-input';
@@ -22,16 +22,11 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
   
   const outputRef = useRef('');
 
-  // UseInput for global hotkeys
   useInput((inputStr, key) => {
-    // Exit on Escape or Ctrl+C
     if (key.escape || (key.ctrl && inputStr === 'c')) {
       exit();
     }
-    
-    // Toggle model selection on Ctrl+M
-    // Note: In some terminals, Ctrl+M is captured as 'return' (key.return)
-    // We use a specific check for the 'm' character with ctrl key
+    // Keep Ctrl+M as a secondary option, but /model is now primary
     if (key.ctrl && inputStr === 'm') {
       setIsSelectingModel(prev => !prev);
     }
@@ -40,6 +35,17 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
   const handleSubmit = async (value: string) => {
     if (isSelectingModel) return;
     if (!value.trim()) return;
+
+    // Handle /model command
+    if (value.startsWith('/model ')) {
+      const newModel = value.split(' ')[1];
+      if (newModel) {
+        onModelChange(newModel);
+        setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] Core model switched to: ${newModel}` }]);
+        setInput('');
+        return;
+      }
+    }
     
     setInput('');
     setHistory(prev => [...prev, { role: 'user', content: value }]);
@@ -67,6 +73,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
   const handleModelSelect = (item: { label: string; value: string }) => {
     onModelChange(item.value);
     setIsSelectingModel(false);
+    setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] Core model switched to: ${item.value}` }]);
   };
 
   const modelOptions = config.providers?.flatMap(p => 
@@ -79,7 +86,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
       <Box borderStyle="double" borderColor="orange" paddingX={2} marginBottom={1} flexDirection="column">
         <Box justifyContent="space-between">
           <Text bold color="orange">
-            🔥 FORGE ENGINE v1.4.0
+            🔥 FORGE ENGINE v1.5.0
           </Text>
           <Box>
             <Text color="yellow" bold>[CORE: </Text>
@@ -92,7 +99,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
         </Box>
         <Box marginTop={1} justifyContent="space-between">
           <Text color="yellow">STATUS: <Text color="green" bold>READY</Text></Text>
-          <Text color="orange" bold>CTRL+M: SWITCH CORE</Text>
+          <Text color="orange" bold>TYPE /model [name] TO SWITCH</Text>
         </Box>
       </Box>
 
@@ -147,14 +154,14 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
             value={input}
             onChange={setInput}
             onSubmit={handleSubmit}
-            placeholder="Awaiting instructions..."
+            placeholder="Awaiting instructions... (Try /model [name])"
           />
         </Box>
       )}
 
       {/* Footer Section */}
       <Box marginTop={1} justifyContent="center">
-        <Text color="gray">ESC: EXIT | CTRL+M: CORE SELECT | FORGE: UNIVERSAL AI ASSISTANT</Text>
+        <Text color="gray">ESC: EXIT | /model [name]: SWITCH CORE | FORGE: UNIVERSAL AI ASSISTANT</Text>
       </Box>
     </Box>
   );
