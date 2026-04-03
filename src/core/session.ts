@@ -30,4 +30,22 @@ export class SessionManager {
     this.currentSession.messages = [];
     this.currentSession.lastUpdated = new Date();
   }
+
+  async compress(model: any) {
+    if (this.currentSession.messages.length < 20) return;
+
+    const summaryPrompt = "Summarize the preceding conversation into a concise technical brief, preserving all key decisions, file paths, and tool outputs. This summary will replace the history to save context.";
+    const messagesToCompress = this.currentSession.messages.slice(0, -5);
+    const recentMessages = this.currentSession.messages.slice(-5);
+
+    const summary = await model.chat([
+      ...messagesToCompress,
+      { role: 'user', content: summaryPrompt }
+    ]);
+
+    this.currentSession.messages = [
+      { role: 'system', content: `Previous Conversation Summary: ${summary.content}` },
+      ...recentMessages
+    ];
+  }
 }
