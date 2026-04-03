@@ -14,6 +14,11 @@ export class AgentLoop {
     this.registry = new ToolRegistry();
   }
 
+  // Allow updating the model adapter instance when the model is switched
+  updateModel(newModel: ModelAdapter) {
+    this.model = newModel;
+  }
+
   async run(userInput: string, onUpdate?: (message: string) => void) {
     this.session.addMessage({ role: 'user', content: userInput });
 
@@ -29,12 +34,12 @@ export class AgentLoop {
         messages = [{ role: 'system', content: config.systemPrompt }, ...messages];
       }
 
-      // Advanced Tool Routing: Route based on the last user message or the initial input
+      // Advanced Tool Routing
       const routingInput = messages.filter(m => m.role === 'user').pop()?.content || userInput;
       const relevantTools = this.registry.routePrompt(routingInput);
       const toolsToProvide = relevantTools.length > 0 ? relevantTools : this.registry.getAllDefinitions();
 
-      // Call the model with the messages and tools
+      // Use the model to generate a response
       const response = await this.model.chat(messages, toolsToProvide);
       this.session.addMessage(response);
 
@@ -60,7 +65,6 @@ export class AgentLoop {
         let result: ToolResult;
 
         if (toolEntry) {
-          // Dynamically call the tool handler based on its name and arguments
           result = await toolEntry.handler(args, toolCall.id);
         } else {
           result = { tool_call_id: toolCall.id, output: `Unknown tool: ${name}`, isError: true };
@@ -78,7 +82,7 @@ export class AgentLoop {
         });
       }
 
-      // Advanced Context Compaction: If messages exceed 12, compact the history
+      // Advanced Context Compaction
       if (this.session.getMessages().length > 12) {
         if (onUpdate) onUpdate('\n[Compacting context...]');
         await this.session.compact(this.model);

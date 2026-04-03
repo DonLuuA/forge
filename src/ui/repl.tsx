@@ -20,7 +20,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
   const [isSelectingModel, setIsSelectingModel] = useState(false);
   const { exit } = useApp();
   
-  // Ref to store the latest output to prevent state closure issues
+  // Use a ref to store the latest output to prevent state closure issues
   const outputRef = useRef('');
 
   useInput((input, key) => {
@@ -44,11 +44,13 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
     try {
       await agent.run(value, (update) => {
         outputRef.current += update;
+        // Use functional state update to ensure we always have the latest state
         setCurrentOutput(outputRef.current);
       });
       
       // After run completes, add the final output to history
-      setHistory(prev => [...prev, { role: 'assistant', content: outputRef.current }]);
+      const finalOutput = outputRef.current;
+      setHistory(prev => [...prev, { role: 'assistant', content: finalOutput }]);
     } catch (error: any) {
       setHistory(prev => [...prev, { role: 'error', content: error.message }]);
     } finally {
@@ -73,7 +75,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
       <Box borderStyle="double" borderColor="orange" paddingX={2} marginBottom={1} flexDirection="column">
         <Box justifyContent="space-between">
           <Text bold color="orange">
-            FORGE ENGINE v1.2.2 🔥
+            FORGE ENGINE v1.2.3 🔥
           </Text>
           <Text color="yellow" bold>
             [STATUS: ONLINE]

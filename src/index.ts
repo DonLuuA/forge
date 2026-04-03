@@ -19,7 +19,7 @@ const configManager = new ConfigManager();
 program
   .name('forge')
   .description('A high-performance, universal AI coding assistant.')
-  .version('1.2.2');
+  .version('1.2.3');
 
 // Update command - defined BEFORE chat to ensure it can run without model init
 program
@@ -74,12 +74,18 @@ program
     const onModelChange = (newModel: string) => {
       configManager.switchModel(newModel);
       const updatedConfig = configManager.getConfig();
+      
+      // Update the model adapter with new config
       model.updateConfig(updatedConfig);
+      
+      // Explicitly update the agent's model reference
+      agent.updateModel(model);
+      
       console.log(chalk.yellow(`\nModel switched to: ${newModel}`));
     };
 
     if (prompt) {
-      console.log(chalk.cyan(`\nFORGE ENGINE v1.2.2 🔥 - Using model: ${config.model}`));
+      console.log(chalk.cyan(`\nFORGE ENGINE v1.2.3 🔥 - Using model: ${config.model}`));
       await agent.run(prompt, (update) => process.stdout.write(update));
       console.log('\n');
     }
