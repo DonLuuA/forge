@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { render, Text, Box, useInput, useApp, Static } from 'ink';
 import TextInput from 'ink-text-input';
 import SelectInput from 'ink-select-input';
@@ -91,6 +91,8 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
       } else {
         setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] Core model switched to: ${modelName}` }]);
       }
+    } else {
+      setHistory(prev => [...prev, { role: 'error', content: `Model "${modelName}" not found in registry.` }]);
     }
   };
 
@@ -99,59 +101,64 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
     handleModelSwitch(item.value);
   };
 
-  const getFireColor = () => {
+  // BRONZE INDUSTRIAL THEME
+  const bronzeColor = "#CD7F32"; // Bronze Hex
+  const getCoreColor = () => {
     const provider = config.providers?.find(p => p.isActive);
     switch (provider?.name) {
       case 'Ollama': return 'orange';
       case 'Gemini': return 'blue';
       case 'OpenAI': return 'green';
-      default: return 'red';
+      default: return bronzeColor;
     }
   };
 
-  const fireColor = getFireColor();
+  const coreColor = getCoreColor();
   const modelOptions = config.providers?.flatMap(p => 
     p.models.map(m => ({ label: `[${p.name.toUpperCase()}] ${m}`, value: m }))
   ) || [];
 
   return (
     <Box flexDirection="column" height="100%">
-      {/* FIXED HEADER - FORGE DASHBOARD */}
-      <Box borderStyle="double" borderColor={fireColor} paddingX={2} flexDirection="column" flexShrink={0}>
+      {/* FIXED HEADER - BRONZE INDUSTRIAL DASHBOARD */}
+      <Box borderStyle="double" borderColor={bronzeColor} paddingX={2} flexDirection="column" flexShrink={0}>
         <Box justifyContent="space-between">
           <Box flexDirection="column">
-            <Text bold color={fireColor}>
+            <Text bold color={bronzeColor}>
               {"  ______ ____  _____   _____ ______ "}
             </Text>
-            <Text bold color={fireColor}>
+            <Text bold color={bronzeColor}>
               {" |  ____/ __ \\|  __ \\ / ____|  ____|"}
             </Text>
-            <Text bold color={fireColor}>
+            <Text bold color={bronzeColor}>
               {" | |__ | |  | | |__) | |  __| |__   "}
             </Text>
-            <Text bold color={fireColor}>
+            <Text bold color={bronzeColor}>
               {" |  __|| |  | |  _  /| | |_ |  __|  "}
             </Text>
-            <Text bold color={fireColor}>
+            <Text bold color={bronzeColor}>
               {" | |   | |__| | | \\ \\| |__| | |____ "}
             </Text>
-            <Text bold color={fireColor}>
-              {" |_|    \\____/|_|  \\_\\\\_____|______| v1.7.0 🔥"}
+            <Text bold color={bronzeColor}>
+              {" |_|    \\____/|_|  \\_\\\\_____|______| v1.8.0 🔥"}
             </Text>
           </Box>
           <Box flexDirection="column" alignItems="flex-end">
             <Box>
               <Text color="yellow" bold>[CORE: </Text>
-              <Text color={fireColor} bold>{config.model.toUpperCase()}</Text>
+              <Text color={coreColor} bold>{config.model.toUpperCase()}</Text>
               <Text color="yellow" bold>]</Text>
             </Box>
             <Box marginTop={1}>
               <Text color="yellow">STATUS: <Text color="green" bold>ONLINE</Text></Text>
             </Box>
             <Box marginTop={1}>
-              <Text color={fireColor} bold>TYPE /model [name] TO SWITCH</Text>
+              <Text color={bronzeColor} bold>TYPE /model [name] TO SWITCH</Text>
             </Box>
           </Box>
+        </Box>
+        <Box marginTop={1} justifyContent="center">
+          <Text color="gray">⬡────────────────────────────────────────────────────────────⬡</Text>
         </Box>
       </Box>
 
@@ -161,7 +168,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
           {(msg, i) => (
             <Box key={i} flexDirection="column" marginBottom={1}>
               <Box>
-                <Text color={msg.role === 'user' ? 'green' : msg.role === 'error' ? 'red' : fireColor} bold>
+                <Text color={msg.role === 'user' ? 'green' : msg.role === 'error' ? 'red' : coreColor} bold>
                   {msg.role === 'user' ? 'USER> ' : msg.role === 'error' ? 'ERROR> ' : 'FORGE> '}
                 </Text>
                 <Text color="white">{msg.content}</Text>
@@ -174,7 +181,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
         {isProcessing && (
           <Box flexDirection="column" marginTop={1}>
             <Box>
-              <Text color={fireColor} bold>
+              <Text color={coreColor} bold>
                 <Spinner type="dots" /> FORGING RESPONSE...
               </Text>
             </Box>
@@ -186,7 +193,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
       </Box>
 
       {/* FIXED FOOTER - INPUT AREA */}
-      <Box borderStyle="single" borderColor={fireColor} paddingX={1} flexShrink={0} marginTop={1}>
+      <Box borderStyle="single" borderColor={bronzeColor} paddingX={1} flexShrink={0} marginTop={1}>
         {isSelectingModel ? (
           <Box flexDirection="column">
             <Text bold color="yellow">SELECT NEW CORE MODEL:</Text>
@@ -194,7 +201,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
           </Box>
         ) : (
           <Box>
-            <Text color={fireColor} bold>{isPromptingKey ? 'KEY> ' : 'FORGE> '}</Text>
+            <Text color={coreColor} bold>{isPromptingKey ? 'KEY> ' : 'FORGE> '}</Text>
             <TextInput
               value={input}
               onChange={setInput}
