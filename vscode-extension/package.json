@@ -1,0 +1,58 @@
+{
+  "name": "forge-vscode",
+  "displayName": "Forge AI Assistant",
+  "description": "Forge AI Assistant for VS Code - Universal AI Coding Assistant.",
+  "version": "0.1.0",
+  "publisher": "DonLuuA",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onCommand:forge.chat"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "forge.chat",
+        "title": "Forge: Open AI Chat"
+      },
+      {
+        "command": "forge.askSelection",
+        "title": "Forge: Ask about selection"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "forge-sidebar",
+          "title": "Forge",
+          "icon": "$(tools)"
+        }
+      ]
+    },
+    "views": {
+      "forge-sidebar": [
+        {
+          "id": "forge-chat-view",
+          "name": "Forge Chat",
+          "type": "webview"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.11.20",
+    "typescript": "^5.3.3"
+  }
+}

@@ -55,7 +55,18 @@ export class ConfigManager {
       isActive: false
     });
 
-    // 4. Check for local Ollama
+    // 4. DeepSeek
+    const deepseekApiKey = process.env.DEEPSEEK_API_KEY || '';
+    const deepseekModels = await ModelAdapter.fetchOpenAIModels('https://api.deepseek.com/v1', deepseekApiKey);
+    providers.push({
+      name: 'DeepSeek',
+      baseUrl: 'https://api.deepseek.com/v1',
+      apiKey: deepseekApiKey,
+      models: deepseekModels.length > 0 ? deepseekModels : ['deepseek-chat', 'deepseek-reasoner'],
+      isActive: false
+    });
+
+    // 5. Check for local Ollama
     const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
     const ollamaModels = await ModelAdapter.fetchOllamaModels(ollamaUrl);
     if (ollamaModels.length > 0) {
@@ -111,6 +122,27 @@ export class ConfigManager {
         this.config.apiKey = apiKey;
       }
     }
+  }
+
+  // SMART ROUTING LOGIC
+  getSmartModel(prompt: string): string {
+    const complexKeywords = ['build', 'feature', 'complex', 'refactor', 'design', 'architect', 'fix bug'];
+    const isComplex = complexKeywords.some(kw => prompt.toLowerCase().includes(kw));
+    
+    if (isComplex) {
+      // Route to powerful model
+      const powerful = ['gpt-4o', 'gemini-1.5-pro', 'deepseek-reasoner'];
+      for (const model of powerful) {
+        if (this.config.providers?.some(p => p.models.includes(model))) return model;
+      }
+    } else {
+      // Route to fast/cheap model
+      const fast = ['gpt-4o-mini', 'gemini-1.5-flash', 'deepseek-chat', 'llama-3.1-8b-instant'];
+      for (const model of fast) {
+        if (this.config.providers?.some(p => p.models.includes(model))) return model;
+      }
+    }
+    return this.config.model;
   }
 
   validate(): boolean {
