@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Forge One-Line Installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/DonLuuA/forge/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/DonLuuA/forge/master/install.sh | bash
 
 set -e
 
@@ -20,7 +20,7 @@ INSTALL_DIR="$HOME/.forge"
 if [ -d "$INSTALL_DIR" ]; then
     echo "🔄 Updating Forge..."
     cd "$INSTALL_DIR"
-    git pull origin main
+    git pull origin master
 else
     echo "📥 Downloading Forge..."
     git clone "$REPO_URL" "$INSTALL_DIR"
