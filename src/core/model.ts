@@ -8,18 +8,24 @@ export class ModelAdapter {
 
   constructor(config: Config) {
     this.config = config;
-    this.client = new OpenAI({
+    this.client = this.createClient(config);
+  }
+
+  private createClient(config: Config): OpenAI {
+    // Handle Gemini specifically if the baseUrl is for Google
+    const isGemini = config.baseUrl.includes('generativelanguage.googleapis.com');
+    
+    return new OpenAI({
       apiKey: config.apiKey,
       baseURL: config.baseUrl,
+      // Gemini requires a specific header if using OpenAI-compatible endpoint
+      defaultHeaders: isGemini ? { 'x-goog-api-key': config.apiKey } : undefined,
     });
   }
 
   updateConfig(config: Config) {
     this.config = config;
-    this.client = new OpenAI({
-      apiKey: config.apiKey,
-      baseURL: config.baseUrl,
-    });
+    this.client = this.createClient(config);
   }
 
   getConfig(): Config {
@@ -43,23 +49,10 @@ export class ModelAdapter {
         tool_calls: choice.tool_calls as any,
       };
     } catch (error: any) {
-      console.error(`Error calling model ${this.config.model}:`, error.message);
+      const provider = this.config.baseUrl.includes('localhost') ? 'Ollama' : 
+                       this.config.baseUrl.includes('googleapis') ? 'Gemini' : 'OpenAI';
+      console.error(`Error calling ${provider} model ${this.config.model}:`, error.message);
       throw error;
-    }
-  }
-
-  async *streamChat(messages: Message[], tools?: ToolDefinition[]) {
-    const stream = await this.client.chat.completions.create({
-      model: this.config.model,
-      messages: messages as any,
-      tools: tools?.map(t => ({ type: 'function', function: t })) as any,
-      temperature: this.config.temperature,
-      max_tokens: this.config.maxTokens,
-      stream: true,
-    });
-
-    for await (const chunk of stream) {
-      yield chunk.choices[0]?.delta;
     }
   }
 
@@ -68,7 +61,7 @@ export class ModelAdapter {
    */
   static async fetchOllamaModels(url: string): Promise<string[]> {
     try {
-      const response = await axios.get(`${url}/api/tags`);
+      const response = await axios.get(`${url}/api/tags`, { timeout: 2000 });
       if (response.status === 200 && response.data.models) {
         return response.data.models.map((m: any) => m.name);
       }
@@ -82,24 +75,13 @@ export class ModelAdapter {
    * Fetches available models from an OpenAI-compatible API.
    */
   static async fetchOpenAIModels(url: string, apiKey: string): Promise<string[]> {
+    if (!apiKey) return [];
     try {
       const client = new OpenAI({ baseURL: url, apiKey });
       const response = await client.models.list();
       return response.data.map(m => m.id);
     } catch (error) {
       return [];
-    }
-  }
-
-  /**
-   * Checks if a local model is available (e.g., Ollama).
-   */
-  static async checkLocalModel(url: string): Promise<boolean> {
-    try {
-      const response = await axios.get(`${url}/api/tags`, { timeout: 2000 });
-      return response.status === 200;
-    } catch {
-      return false;
     }
   }
 }

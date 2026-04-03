@@ -10,14 +10,17 @@ interface Props {
   agent: AgentLoop;
   config: Config;
   onModelChange: (model: string) => void;
+  onKeyUpdate: (provider: string, key: string) => void;
 }
 
-const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
+const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<{ role: string; content: string }[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentOutput, setCurrentOutput] = useState('');
   const [isSelectingModel, setIsSelectingModel] = useState(false);
+  const [isPromptingKey, setIsPromptingKey] = useState(false);
+  const [pendingProvider, setPendingProvider] = useState('');
   const { exit } = useApp();
   
   const outputRef = useRef('');
@@ -26,7 +29,6 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
     if (key.escape || (key.ctrl && inputStr === 'c')) {
       exit();
     }
-    // Keep Ctrl+M as a secondary option, but /model is now primary
     if (key.ctrl && inputStr === 'm') {
       setIsSelectingModel(prev => !prev);
     }
@@ -34,14 +36,24 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
 
   const handleSubmit = async (value: string) => {
     if (isSelectingModel) return;
+    
+    // Handle API Key Prompting
+    if (isPromptingKey) {
+      onKeyUpdate(pendingProvider, value);
+      setIsPromptingKey(false);
+      setPendingProvider('');
+      setInput('');
+      setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] API Key updated for ${pendingProvider}. Core is now active.` }]);
+      return;
+    }
+
     if (!value.trim()) return;
 
     // Handle /model command
     if (value.startsWith('/model ')) {
       const newModel = value.split(' ')[1];
       if (newModel) {
-        onModelChange(newModel);
-        setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] Core model switched to: ${newModel}` }]);
+        handleModelSwitch(newModel);
         setInput('');
         return;
       }
@@ -70,27 +82,54 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
     }
   };
 
-  const handleModelSelect = (item: { label: string; value: string }) => {
-    onModelChange(item.value);
-    setIsSelectingModel(false);
-    setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] Core model switched to: ${item.value}` }]);
+  const handleModelSwitch = (modelName: string) => {
+    const provider = config.providers?.find(p => p.models.includes(modelName));
+    if (provider) {
+      onModelChange(modelName);
+      
+      // Check if the provider needs a key
+      if (provider.name !== 'Ollama' && !provider.apiKey) {
+        setIsPromptingKey(true);
+        setPendingProvider(provider.name);
+        setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] Switching to ${provider.name}. Please provide your API Key:` }]);
+      } else {
+        setHistory(prev => [...prev, { role: 'assistant', content: `[SYSTEM] Core model switched to: ${modelName}` }]);
+      }
+    }
   };
 
+  const handleModelSelect = (item: { label: string; value: string }) => {
+    setIsSelectingModel(false);
+    handleModelSwitch(item.value);
+  };
+
+  // Dynamic Fire Theme based on provider
+  const getFireColor = () => {
+    const provider = config.providers?.find(p => p.isActive);
+    switch (provider?.name) {
+      case 'Ollama': return 'orange';
+      case 'Gemini': return 'blue';
+      case 'OpenAI': return 'green';
+      default: return 'red';
+    }
+  };
+
+  const fireColor = getFireColor();
   const modelOptions = config.providers?.flatMap(p => 
     p.models.map(m => ({ label: `[${p.name.toUpperCase()}] ${m}`, value: m }))
   ) || [];
 
   return (
     <Box flexDirection="column" padding={1}>
-      {/* Header Section - TRUE FORGE AESTHETIC */}
-      <Box borderStyle="double" borderColor="orange" paddingX={2} marginBottom={1} flexDirection="column">
+      {/* Header Section - DYNAMIC FIRE THEME */}
+      <Box borderStyle="double" borderColor={fireColor} paddingX={2} marginBottom={1} flexDirection="column">
         <Box justifyContent="space-between">
-          <Text bold color="orange">
-            🔥 FORGE ENGINE v1.5.0
+          <Text bold color={fireColor}>
+            🔥 FORGE ENGINE v1.6.0
           </Text>
           <Box>
             <Text color="yellow" bold>[CORE: </Text>
-            <Text color="red" bold>{config.model.toUpperCase()}</Text>
+            <Text color={fireColor} bold>{config.model.toUpperCase()}</Text>
             <Text color="yellow" bold>]</Text>
           </Box>
         </Box>
@@ -99,7 +138,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
         </Box>
         <Box marginTop={1} justifyContent="space-between">
           <Text color="yellow">STATUS: <Text color="green" bold>READY</Text></Text>
-          <Text color="orange" bold>TYPE /model [name] TO SWITCH</Text>
+          <Text color={fireColor} bold>TYPE /model [name] TO SWITCH</Text>
         </Box>
       </Box>
 
@@ -109,7 +148,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
           {(msg, i) => (
             <Box key={i} flexDirection="column" marginBottom={1}>
               <Box>
-                <Text color={msg.role === 'user' ? 'green' : msg.role === 'error' ? 'red' : 'orange'} bold>
+                <Text color={msg.role === 'user' ? 'green' : msg.role === 'error' ? 'red' : fireColor} bold>
                   {msg.role === 'user' ? 'USER> ' : msg.role === 'error' ? 'ERROR> ' : 'FORGE> '}
                 </Text>
                 <Text color="white">{msg.content}</Text>
@@ -136,7 +175,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
       {isProcessing && (
         <Box marginBottom={1} flexDirection="column">
           <Box>
-            <Text color="orange" bold>
+            <Text color={fireColor} bold>
               <Spinner type="dots" /> FORGING RESPONSE...
             </Text>
           </Box>
@@ -148,13 +187,14 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
 
       {/* Input Section */}
       {!isProcessing && !isSelectingModel && (
-        <Box borderStyle="single" borderColor="orange" paddingX={1}>
-          <Text color="orange" bold>{'FORGE> '}</Text>
+        <Box borderStyle="single" borderColor={fireColor} paddingX={1}>
+          <Text color={fireColor} bold>{isPromptingKey ? 'KEY> ' : 'FORGE> '}</Text>
           <TextInput
             value={input}
             onChange={setInput}
             onSubmit={handleSubmit}
-            placeholder="Awaiting instructions... (Try /model [name])"
+            placeholder={isPromptingKey ? `Enter ${pendingProvider} API Key...` : "Awaiting instructions..."}
+            mask={isPromptingKey ? "*" : undefined}
           />
         </Box>
       )}
@@ -167,6 +207,6 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
   );
 };
 
-export const startREPL = (agent: AgentLoop, config: Config, onModelChange: (model: string) => void) => {
-  render(<REPL agent={agent} config={config} onModelChange={onModelChange} />);
+export const startREPL = (agent: AgentLoop, config: Config, onModelChange: (model: string) => void, onKeyUpdate: (provider: string, key: string) => void) => {
+  render(<REPL agent={agent} config={config} onModelChange={onModelChange} onKeyUpdate={onKeyUpdate} />);
 };

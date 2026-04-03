@@ -35,31 +35,25 @@ export class ConfigManager {
       });
     }
 
-    // 2. Check for OpenAI (if API key exists)
-    if (process.env.OPENAI_API_KEY) {
-      const openaiModels = await ModelAdapter.fetchOpenAIModels('https://api.openai.com/v1', process.env.OPENAI_API_KEY);
-      if (openaiModels.length > 0) {
-        providers.push({
-          name: 'OpenAI',
-          baseUrl: 'https://api.openai.com/v1',
-          apiKey: process.env.OPENAI_API_KEY,
-          models: openaiModels,
-          isActive: providers.length === 0 // Active if no Ollama
-        });
-      }
-    }
+    // 2. Check for OpenAI
+    const openaiKey = process.env.OPENAI_API_KEY || '';
+    providers.push({
+      name: 'OpenAI',
+      baseUrl: 'https://api.openai.com/v1',
+      apiKey: openaiKey,
+      models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
+      isActive: providers.length === 0
+    });
 
-    // 3. Check for other custom providers from environment
-    if (process.env.FORGE_BASE_URL && process.env.FORGE_API_KEY && !providers.some(p => p.baseUrl === process.env.FORGE_BASE_URL)) {
-      const customModels = await ModelAdapter.fetchOpenAIModels(process.env.FORGE_BASE_URL, process.env.FORGE_API_KEY);
-      providers.push({
-        name: 'Custom',
-        baseUrl: process.env.FORGE_BASE_URL,
-        apiKey: process.env.FORGE_API_KEY,
-        models: customModels.length > 0 ? customModels : [process.env.FORGE_MODEL || 'gpt-4o'],
-        isActive: providers.length === 0
-      });
-    }
+    // 3. Check for Gemini
+    const geminiKey = process.env.GEMINI_API_KEY || '';
+    providers.push({
+      name: 'Gemini',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+      apiKey: geminiKey,
+      models: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash-exp'],
+      isActive: false
+    });
 
     this.config.providers = providers;
 
@@ -90,10 +84,21 @@ export class ConfigManager {
     }
   }
 
-  validate(): boolean {
-    if (!this.config.apiKey && !this.config.baseUrl.includes('localhost') && !this.config.baseUrl.includes('127.0.0.1')) {
-      return false;
+  updateProviderKey(providerName: string, apiKey: string) {
+    const provider = this.config.providers?.find(p => p.name === providerName);
+    if (provider) {
+      provider.apiKey = apiKey;
+      if (provider.isActive) {
+        this.config.apiKey = apiKey;
+      }
     }
-    return true;
+  }
+
+  validate(): boolean {
+    // Ollama doesn't need a key, others do
+    if (this.config.baseUrl.includes('localhost') || this.config.baseUrl.includes('127.0.0.1')) {
+      return true;
+    }
+    return !!this.config.apiKey;
   }
 }
