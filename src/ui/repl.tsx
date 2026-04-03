@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { render, Text, Box, useInput, useApp } from 'ink';
 import TextInput from 'ink-text-input';
 import SelectInput from 'ink-select-input';
@@ -20,19 +20,21 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
   const [isSelectingModel, setIsSelectingModel] = useState(false);
   const { exit } = useApp();
   
-  // Use a ref to store the latest output to prevent state closure issues
   const outputRef = useRef('');
 
-  useInput((input, key) => {
-    if (key.escape || (key.ctrl && input === 'c')) {
+  // Explicitly handle input for Ctrl+M and other keys
+  useInput((inputStr, key) => {
+    if (key.escape || (key.ctrl && inputStr === 'c')) {
       exit();
     }
-    if (key.ctrl && input === 'm') {
-      setIsSelectingModel(!isSelectingModel);
+    // Check for Ctrl+M (which often comes as 'm' with ctrl: true)
+    if (key.ctrl && (inputStr === 'm' || inputStr === '\r')) {
+      setIsSelectingModel(prev => !prev);
     }
   });
 
   const handleSubmit = async (value: string) => {
+    if (isSelectingModel) return; // Prevent submission while selecting model
     if (!value.trim()) return;
     
     setInput('');
@@ -44,11 +46,9 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
     try {
       await agent.run(value, (update) => {
         outputRef.current += update;
-        // Use functional state update to ensure we always have the latest state
         setCurrentOutput(outputRef.current);
       });
       
-      // After run completes, add the final output to history
       const finalOutput = outputRef.current;
       setHistory(prev => [...prev, { role: 'assistant', content: finalOutput }]);
     } catch (error: any) {
@@ -75,7 +75,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
       <Box borderStyle="double" borderColor="orange" paddingX={2} marginBottom={1} flexDirection="column">
         <Box justifyContent="space-between">
           <Text bold color="orange">
-            FORGE ENGINE v1.2.3 🔥
+            FORGE ENGINE v1.3.0 🔥
           </Text>
           <Text color="yellow" bold>
             [STATUS: ONLINE]

@@ -3,6 +3,7 @@ import { shellToolDefinition, executeCommand } from './shell.js';
 import { readFileToolDefinition, writeFileToolDefinition, readFile, writeFile } from './file.js';
 import { gitToolDefinition, gitOperation } from './git.js';
 import { searchFilesToolDefinition, grepToolDefinition, searchFiles, grep } from './search.js';
+import { browserToolDefinition, browserOperation } from './browser.js';
 
 export interface ToolEntry {
   definition: ToolDefinition;
@@ -19,6 +20,7 @@ export class ToolRegistry {
     this.register('git_operation', gitToolDefinition, gitOperation);
     this.register('search_files', searchFilesToolDefinition, searchFiles);
     this.register('grep', grepToolDefinition, grep);
+    this.register('browser_operation', browserToolDefinition, browserOperation);
   }
 
   register(name: string, definition: ToolDefinition, handler: (args: any, toolCallId: string) => Promise<ToolResult>) {
