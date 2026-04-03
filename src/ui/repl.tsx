@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { render, Text, Box, useInput, useApp } from 'ink';
 import TextInput from 'ink-text-input';
 import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
-import chalk from 'chalk';
 import { AgentLoop } from '../agent/loop.js';
 import { Config } from '../types/index.js';
 
@@ -21,7 +20,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
   const [isSelectingModel, setIsSelectingModel] = useState(false);
   const { exit } = useApp();
   
-  // Use a ref to track the current output for the finally block
+  // Ref to store the latest output to prevent state closure issues
   const outputRef = useRef('');
 
   useInput((input, key) => {
@@ -47,11 +46,13 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
         outputRef.current += update;
         setCurrentOutput(outputRef.current);
       });
+      
+      // After run completes, add the final output to history
+      setHistory(prev => [...prev, { role: 'assistant', content: outputRef.current }]);
     } catch (error: any) {
       setHistory(prev => [...prev, { role: 'error', content: error.message }]);
     } finally {
       setIsProcessing(false);
-      setHistory(prev => [...prev, { role: 'assistant', content: outputRef.current }]);
       setCurrentOutput('');
       outputRef.current = '';
     }
@@ -72,7 +73,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
       <Box borderStyle="double" borderColor="orange" paddingX={2} marginBottom={1} flexDirection="column">
         <Box justifyContent="space-between">
           <Text bold color="orange">
-            FORGE ENGINE v1.2.1 🔥
+            FORGE ENGINE v1.2.2 🔥
           </Text>
           <Text color="yellow" bold>
             [STATUS: ONLINE]
@@ -94,7 +95,7 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange }) => {
               <Text color={msg.role === 'user' ? 'green' : msg.role === 'error' ? 'red' : 'white'} bold>
                 {msg.role === 'user' ? 'forge> ' : msg.role === 'error' ? 'ERROR: ' : 'ASSISTANT: '}
               </Text>
-              <Text color={msg.role === 'user' ? 'white' : msg.role === 'error' ? 'red' : 'white'}>
+              <Text color="white">
                 {msg.content}
               </Text>
             </Box>
