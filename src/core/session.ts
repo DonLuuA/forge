@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Message, Session } from '../types/index.js';
+import { Message, Session, UsageSummary } from '../types/index.js';
 
 export class SessionManager {
   private currentSession: Session;
@@ -10,12 +10,18 @@ export class SessionManager {
       messages: [],
       startTime: new Date(),
       lastUpdated: new Date(),
+      totalUsage: { inputTokens: 0, outputTokens: 0 },
     };
   }
 
   addMessage(message: Message) {
     this.currentSession.messages.push(message);
     this.currentSession.lastUpdated = new Date();
+  }
+
+  updateUsage(usage: UsageSummary) {
+    this.currentSession.totalUsage.inputTokens += usage.inputTokens;
+    this.currentSession.totalUsage.outputTokens += usage.outputTokens;
   }
 
   getMessages(): Message[] {
@@ -26,26 +32,42 @@ export class SessionManager {
     return this.currentSession;
   }
 
-  clear() {
-    this.currentSession.messages = [];
-    this.currentSession.lastUpdated = new Date();
-  }
+  async compact(model: any, preserveRecent: number = 4) {
+    if (this.currentSession.messages.length < 12) return;
 
-  async compress(model: any) {
-    if (this.currentSession.messages.length < 20) return;
+    const summaryPrompt = `
+      Summarize the preceding conversation into a concise technical brief.
+      Preserve all key decisions, file paths, and tool outputs.
+      This summary will replace the history to save context.
+      Format the output as:
+      <summary>
+      Conversation summary:
+      - Scope: [X] earlier messages compacted.
+      - Key files referenced: [files]
+      - Current work: [description]
+      - Key timeline: [events]
+      </summary>
+    `;
 
-    const summaryPrompt = "Summarize the preceding conversation into a concise technical brief, preserving all key decisions, file paths, and tool outputs. This summary will replace the history to save context.";
-    const messagesToCompress = this.currentSession.messages.slice(0, -5);
-    const recentMessages = this.currentSession.messages.slice(-5);
+    const messagesToCompress = this.currentSession.messages.slice(0, -preserveRecent);
+    const recentMessages = this.currentSession.messages.slice(-preserveRecent);
 
     const summary = await model.chat([
       ...messagesToCompress,
       { role: 'user', content: summaryPrompt }
     ]);
 
+    const continuationPreamble = "This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.\n\n";
+    
     this.currentSession.messages = [
-      { role: 'system', content: `Previous Conversation Summary: ${summary.content}` },
+      { role: 'system', content: `${continuationPreamble}${summary.content}\n\nRecent messages are preserved verbatim.` },
       ...recentMessages
     ];
+  }
+
+  clear() {
+    this.currentSession.messages = [];
+    this.currentSession.totalUsage = { inputTokens: 0, outputTokens: 0 };
+    this.currentSession.lastUpdated = new Date();
   }
 }

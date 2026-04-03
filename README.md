@@ -10,13 +10,14 @@ Shock your terminal and get Forge running instantly with this one-liner:
 curl -fsSL https://raw.githubusercontent.com/DonLuuA/forge/master/install.sh | bash
 ```
 
-## Features
+## Supercharged Features
 
 - **Universal Model Support**: Plug in any LLM (OpenAI, Anthropic, DeepSeek, Groq, Mistral).
+- **Intelligent Tool Routing**: Forge uses a scoring mechanism to provide only the most relevant tools for your prompt, saving context and improving accuracy.
+- **Advanced Context Compaction**: Automatically summarizes conversation history while preserving recent messages verbatim, ensuring seamless long-running sessions.
 - **Local-First**: Auto-detects and configures for local models running via Ollama or LM Studio.
 - **Agentic Intelligence**: Multi-step planning, self-healing diagnostics, and tool execution.
-- **Context Compression**: Sophisticated session management to handle massive codebases.
-- **Zero Config**: Auto-detects your environment and local models on startup.
+- **Zero Config**: Auto-detects your environment, Python setup, and local models on startup.
 
 ## Configuration
 
@@ -36,4 +37,4 @@ forge chat "Create a new React component for a dashboard"
 
 ## Why Forge?
 
-Forge isn't just another CLI tool; it's a developer's power-up. It understands your local environment, respects your choice of models, and executes tasks with precision. Whether you're using a cloud-based giant or a local specialist, Forge gets to work instantly.
+Forge isn't just another CLI tool; it's a developer's power-up. It understands your local environment, respects your choice of models, and executes tasks with precision. With its new intelligent routing and compaction logic, Forge is faster and smarter than ever.

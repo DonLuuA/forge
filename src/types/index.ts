@@ -5,6 +5,9 @@ export interface Config {
   temperature: number;
   maxTokens: number;
   systemPrompt?: string;
+  maxTurns?: number;
+  maxBudgetTokens?: number;
+  compactAfterTurns?: number;
 }
 
 export interface Message {
@@ -28,6 +31,8 @@ export interface ToolDefinition {
   name: string;
   description: string;
   parameters: object;
+  responsibility?: string;
+  sourceHint?: string;
 }
 
 export interface ToolResult {
@@ -41,4 +46,15 @@ export interface Session {
   messages: Message[];
   startTime: Date;
   lastUpdated: Date;
+  totalUsage: UsageSummary;
+}
+
+export interface UsageSummary {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+export interface PermissionDenial {
+  toolName: string;
+  reason: string;
 }
