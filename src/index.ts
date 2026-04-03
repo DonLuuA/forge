@@ -6,6 +6,12 @@ import { ModelAdapter } from './core/model.js';
 import { SessionManager } from './core/session.js';
 import { AgentLoop } from './agent/loop.js';
 import { startREPL } from './ui/repl.js';
+import { execSync } from 'child_process';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const program = new Command();
 const configManager = new ConfigManager();
@@ -48,6 +54,36 @@ program
     }
 
     startREPL(agent, config, onModelChange);
+  });
+
+program
+  .command('update')
+  .description('Self-update the Forge CLI to the latest version from GitHub.')
+  .action(async () => {
+    console.log(chalk.cyan('Checking for updates...'));
+    try {
+      const repoPath = path.resolve(__dirname, '..');
+      
+      console.log(chalk.yellow('Fetching latest changes from GitHub...'));
+      execSync('git fetch origin master', { cwd: repoPath, stdio: 'inherit' });
+      
+      const status = execSync('git status -uno', { cwd: repoPath }).toString();
+      if (status.includes('Your branch is up to date')) {
+        console.log(chalk.green('Forge is already up to date.'));
+        return;
+      }
+
+      console.log(chalk.yellow('Updating local repository...'));
+      execSync('git reset --hard origin/master', { cwd: repoPath, stdio: 'inherit' });
+      
+      console.log(chalk.yellow('Installing dependencies and rebuilding...'));
+      execSync('npm install && npm run build', { cwd: repoPath, stdio: 'inherit' });
+      
+      console.log(chalk.green('Forge has been successfully updated to the latest version!'));
+    } catch (error) {
+      console.error(chalk.red('Error during update:'), error instanceof Error ? error.message : error);
+      console.log(chalk.yellow('Manual update suggestion: cd to your forge directory and run git pull && npm install && npm run build'));
+    }
   });
 
 program.parse(process.argv);
