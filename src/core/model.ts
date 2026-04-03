@@ -13,6 +13,10 @@ export class ModelAdapter {
     });
   }
 
+  getConfig(): Config {
+    return this.config;
+  }
+
   async chat(messages: Message[], tools?: ToolDefinition[]): Promise<Message> {
     try {
       const response = await this.client.chat.completions.create({

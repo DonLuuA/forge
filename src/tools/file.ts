@@ -27,7 +27,7 @@ export const writeFileToolDefinition: ToolDefinition = {
   },
 };
 
-export async function readFile(filePath: string, toolCallId: string): Promise<ToolResult> {
+export async function readFile({ path: filePath }: { path: string }, toolCallId: string): Promise<ToolResult> {
   try {
     const content = await fs.readFile(path.resolve(filePath), 'utf-8');
     return { tool_call_id: toolCallId, output: content };
@@ -36,7 +36,7 @@ export async function readFile(filePath: string, toolCallId: string): Promise<To
   }
 }
 
-export async function writeFile(filePath: string, content: string, toolCallId: string): Promise<ToolResult> {
+export async function writeFile({ path: filePath, content }: { path: string, content: string }, toolCallId: string): Promise<ToolResult> {
   try {
     const fullPath = path.resolve(filePath);
     await fs.mkdir(path.dirname(fullPath), { recursive: true });

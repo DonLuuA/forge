@@ -4,7 +4,7 @@ import { ConfigManager } from './core/config.js';
 import { ModelAdapter } from './core/model.js';
 import { SessionManager } from './core/session.js';
 import { AgentLoop } from './agent/loop.js';
-import { createInterface } from 'readline';
+import { startREPL } from './ui/repl.js';
 
 const program = new Command();
 const configManager = new ConfigManager();
@@ -32,31 +32,13 @@ program
     const session = new SessionManager();
     const agent = new AgentLoop(model, session);
 
-    console.log(chalk.blue(`Forge v1.0.0 - Using model: ${config.model}`));
-    console.log(chalk.gray('Type "exit" to quit.\n'));
-
     if (prompt) {
+      console.log(chalk.blue(`Forge v1.0.0 - Using model: ${config.model}`));
       await agent.run(prompt, (update) => process.stdout.write(update));
+      console.log('\n');
     }
 
-    const readline = createInterface({
-      input: process.stdin,
-      output: process.stdout,
-      prompt: chalk.green('forge> '),
-    });
-
-    readline.prompt();
-
-    readline.on('line', async (line: string) => {
-      if (line.toLowerCase() === 'exit') {
-        readline.close();
-        return;
-      }
-
-      await agent.run(line, (update) => process.stdout.write(update));
-      console.log('\n');
-      readline.prompt();
-    });
+    startREPL(agent, config);
   });
 
 program.parse(process.argv);

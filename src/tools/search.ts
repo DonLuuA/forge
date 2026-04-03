@@ -27,7 +27,7 @@ export const grepToolDefinition: ToolDefinition = {
   },
 };
 
-export async function searchFiles(pattern: string, toolCallId: string): Promise<ToolResult> {
+export async function searchFiles({ pattern }: { pattern: string }, toolCallId: string): Promise<ToolResult> {
   try {
     const files = await fg(pattern, { ignore: ['node_modules/**'] });
     return { tool_call_id: toolCallId, output: files.join('\n') };
@@ -36,7 +36,7 @@ export async function searchFiles(pattern: string, toolCallId: string): Promise<
   }
 }
 
-export async function grep(pattern: string, searchPath: string, toolCallId: string): Promise<ToolResult> {
+export async function grep({ pattern, path: searchPath }: { pattern: string, path: string }, toolCallId: string): Promise<ToolResult> {
   try {
     const files = await fg(`${searchPath}/**/*`, { ignore: ['node_modules/**'], absolute: true });
     const results: string[] = [];
@@ -44,8 +44,11 @@ export async function grep(pattern: string, searchPath: string, toolCallId: stri
 
     for (const file of files) {
       const stats = await fs.stat(file);
-      if (stats.isFile()) {
+      if (stats.isFile() && stats.size < 1024 * 1024) { // Skip files larger than 1MB
         const content = await fs.readFile(file, 'utf-8');
+        // Simple check for binary content
+        if (content.includes('\0')) continue;
+        
         const lines = content.split('\n');
         lines.forEach((line, index) => {
           if (regex.test(line)) {

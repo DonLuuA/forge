@@ -19,7 +19,7 @@ export const shellToolDefinition: ToolDefinition = {
   },
 };
 
-export async function executeCommand(command: string, toolCallId: string): Promise<ToolResult> {
+export async function executeCommand({ command }: { command: string }, toolCallId: string): Promise<ToolResult> {
   try {
     const { stdout, stderr } = await execPromise(command);
     return {

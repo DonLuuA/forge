@@ -15,11 +15,11 @@ export const gitToolDefinition: ToolDefinition = {
   },
 };
 
-export async function gitOperation(command: string, toolCallId: string): Promise<ToolResult> {
+export async function gitOperation({ command }: { command: string }, toolCallId: string): Promise<ToolResult> {
   try {
-    const args = command.split(' ');
-    const result = await (git as any)[args[0]](...args.slice(1));
-    return { tool_call_id: toolCallId, output: JSON.stringify(result, null, 2) };
+    // Use raw command to handle complex arguments and quoting
+    const result = await git.raw(command.split(/\s+/));
+    return { tool_call_id: toolCallId, output: typeof result === 'string' ? result : JSON.stringify(result, null, 2) };
   } catch (error: any) {
     return { tool_call_id: toolCallId, output: error.message, isError: true };
   }

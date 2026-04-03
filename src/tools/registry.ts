@@ -6,7 +6,7 @@ import { searchFilesToolDefinition, grepToolDefinition, searchFiles, grep } from
 
 export interface ToolEntry {
   definition: ToolDefinition;
-  handler: (...args: any[]) => Promise<ToolResult>;
+  handler: (args: any, toolCallId: string) => Promise<ToolResult>;
 }
 
 export class ToolRegistry {
@@ -21,7 +21,7 @@ export class ToolRegistry {
     this.register('grep', grepToolDefinition, grep);
   }
 
-  register(name: string, definition: ToolDefinition, handler: (...args: any[]) => Promise<ToolResult>) {
+  register(name: string, definition: ToolDefinition, handler: (args: any, toolCallId: string) => Promise<ToolResult>) {
     this.tools.set(name, { definition, handler });
   }
 

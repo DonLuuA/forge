@@ -21,10 +21,17 @@ export class AgentLoop {
     const maxIterations = 10;
 
     while (iterations < maxIterations) {
-      const messages = this.session.getMessages();
+      let messages = this.session.getMessages();
       
-      // Intelligent Tool Routing: Only provide relevant tools to the model
-      const relevantTools = this.registry.routePrompt(userInput);
+      // Inject system prompt if not present
+      const config = this.model.getConfig();
+      if (config.systemPrompt && !messages.some(m => m.role === 'system')) {
+        messages = [{ role: 'system', content: config.systemPrompt }, ...messages];
+      }
+
+      // Intelligent Tool Routing: Route based on the last user message or the initial input
+      const routingInput = messages.filter(m => m.role === 'user').pop()?.content || userInput;
+      const relevantTools = this.registry.routePrompt(routingInput);
       const toolsToProvide = relevantTools.length > 0 ? relevantTools : this.registry.getAllDefinitions();
 
       const response = await this.model.chat(messages, toolsToProvide);
@@ -50,8 +57,7 @@ export class AgentLoop {
 
         if (toolEntry) {
           // Dynamically call the tool handler based on its name and arguments
-          const handlerArgs = Object.values(args);
-          result = await toolEntry.handler(...handlerArgs, toolCall.id);
+          result = await toolEntry.handler(args, toolCall.id);
         } else {
           result = { tool_call_id: toolCall.id, output: `Unknown tool: ${name}`, isError: true };
         }

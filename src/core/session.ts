@@ -35,34 +35,42 @@ export class SessionManager {
   async compact(model: any, preserveRecent: number = 4) {
     if (this.currentSession.messages.length < 12) return;
 
-    const summaryPrompt = `
-      Summarize the preceding conversation into a concise technical brief.
-      Preserve all key decisions, file paths, and tool outputs.
-      This summary will replace the history to save context.
-      Format the output as:
-      <summary>
-      Conversation summary:
-      - Scope: [X] earlier messages compacted.
-      - Key files referenced: [files]
-      - Current work: [description]
-      - Key timeline: [events]
-      </summary>
-    `;
+    try {
+      const summaryPrompt = `
+        Summarize the preceding conversation into a concise technical brief.
+        Preserve all key decisions, file paths, and tool outputs.
+        This summary will replace the history to save context.
+        Format the output as:
+        <summary>
+        Conversation summary:
+        - Scope: [X] earlier messages compacted.
+        - Key files referenced: [files]
+        - Current work: [description]
+        - Key timeline: [events]
+        </summary>
+      `;
 
-    const messagesToCompress = this.currentSession.messages.slice(0, -preserveRecent);
-    const recentMessages = this.currentSession.messages.slice(-preserveRecent);
+      const systemMessage = this.currentSession.messages.find(m => m.role === 'system');
+      const messagesToCompress = this.currentSession.messages.filter(m => m.role !== 'system').slice(0, -preserveRecent);
+      const recentMessages = this.currentSession.messages.slice(-preserveRecent);
 
-    const summary = await model.chat([
-      ...messagesToCompress,
-      { role: 'user', content: summaryPrompt }
-    ]);
+      const summary = await model.chat([
+        ...(systemMessage ? [systemMessage] : []),
+        ...messagesToCompress,
+        { role: 'user', content: summaryPrompt }
+      ]);
 
-    const continuationPreamble = "This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.\n\n";
-    
-    this.currentSession.messages = [
-      { role: 'system', content: `${continuationPreamble}${summary.content}\n\nRecent messages are preserved verbatim.` },
-      ...recentMessages
-    ];
+      const continuationPreamble = "This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.\n\n";
+      
+      this.currentSession.messages = [
+        ...(systemMessage ? [systemMessage] : []),
+        { role: 'system', content: `${continuationPreamble}${summary.content}\n\nRecent messages are preserved verbatim.` },
+        ...recentMessages
+      ];
+    } catch (error: any) {
+      console.error('Failed to compact context:', error.message);
+      // If compaction fails, we just keep the messages as is for now
+    }
   }
 
   clear() {
