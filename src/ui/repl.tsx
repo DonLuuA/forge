@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { render, Text, Box, useInput, useApp, Static } from 'ink';
+import { render, Text, Box, useInput, useApp } from 'ink';
 import TextInput from 'ink-text-input';
 import SelectInput from 'ink-select-input';
 import Spinner from 'ink-spinner';
@@ -114,11 +114,11 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
   const getCoreColor = () => {
     const provider = config.providers?.find(p => p.isActive);
     switch (provider?.name) {
-      case 'Ollama': return 'orange';
-      case 'Gemini': return 'blue';
+      case 'Ollama': return 'yellow';
+      case 'Gemini': return 'cyan';
       case 'OpenAI': return 'green';
       case 'Groq': return 'magenta';
-      default: return bronzeColor;
+      default: return 'white';
     }
   };
 
@@ -127,77 +127,61 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
     p.models.map(m => ({ label: `[${p.name.toUpperCase()}] ${m}`, value: m }))
   ) || [];
 
-  // FIXED DIMENSIONS
-  const headerHeight = 8;
-  const footerHeight = 4;
-  const chatHeight = terminalHeight - headerHeight - footerHeight - 2;
+  // STRICT LAYOUT DIMENSIONS
+  const headerHeight = 6;
+  const footerHeight = 3;
+  const chatHeight = Math.max(5, terminalHeight - headerHeight - footerHeight - 3);
   
-  // Display only what fits in the viewport
-  const visibleHistory = history.slice(-Math.max(1, Math.floor(chatHeight / 2)));
+  // Sliding window: show only the last N messages that fit
+  const maxMessagesPerView = Math.floor(chatHeight / 2);
+  const visibleHistory = history.slice(-maxMessagesPerView);
 
   return (
     <Box flexDirection="column" height={terminalHeight} width="100%">
-      {/* FIXED HEADER */}
-      <Box borderStyle="double" borderColor={bronzeColor} paddingX={2} flexDirection="column" flexShrink={0} height={headerHeight}>
-        <Box justifyContent="space-between">
-          <Box flexDirection="column">
+      {/* FIXED HEADER - CLEAN MACHINED LOOK */}
+      <Box borderStyle="round" borderColor={bronzeColor} paddingX={1} paddingY={0} flexShrink={0}>
+        <Box justifyContent="space-between" width="100%">
+          <Box>
             <Text bold color={bronzeColor}>
-              {" ▓▓▓▓▓▓ ▓▓▓▓  ▓▓▓▓▓   ▓▓▓▓▓ ▓▓▓▓▓▓ "}
-            </Text>
-            <Text bold color={bronzeColor}>
-              {" ▓▓▓▓   ▓▓  ▓▓ ▓▓  ▓▓ ▓▓ ▓▓▓ ▓▓▓▓   v2.1.0 🔥"}
+              ⚙ FORGE v2.2.0 🔥
             </Text>
           </Box>
-          <Box flexDirection="column" alignItems="flex-end">
-            <Box>
-              <Text color="yellow" bold>[CORE: </Text>
-              <Text color={coreColor} bold>{config.model.toUpperCase()}</Text>
-              <Text color="yellow" bold>]</Text>
-            </Box>
-            <Box>
-              <Text color="yellow">STATUS: <Text color="green" bold>ONLINE</Text></Text>
-            </Box>
+          <Box>
+            <Text color="yellow">[CORE: </Text>
+            <Text color={coreColor} bold>{config.model}</Text>
+            <Text color="yellow">]</Text>
           </Box>
-        </Box>
-        <Box marginTop={1} justifyContent="center">
-          <Text color="gray">▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒</Text>
         </Box>
       </Box>
 
-      {/* CHAT VIEWPORT */}
-      <Box flexDirection="column" flexGrow={1} paddingX={2} height={chatHeight} overflow="hidden">
-        <Static items={visibleHistory}>
-          {(msg, i) => (
-            <Box key={i} flexDirection="column" marginBottom={1}>
-              <Box>
-                <Text color={msg.role === 'user' ? 'green' : msg.role === 'error' ? 'red' : coreColor} bold>
-                  {msg.role === 'user' ? 'USER> ' : msg.role === 'error' ? 'ERROR> ' : 'FORGE> '}
-                </Text>
-                <Text color="white">{msg.content}</Text>
-              </Box>
-            </Box>
-          )}
-        </Static>
+      {/* CHAT VIEWPORT - STRICTLY BOUNDED */}
+      <Box flexDirection="column" height={chatHeight} paddingX={1} paddingY={0} overflow="hidden">
+        {visibleHistory.map((msg, i) => (
+          <Box key={i} flexDirection="column" marginBottom={0}>
+            <Text>
+              <Text color={msg.role === 'user' ? 'green' : msg.role === 'error' ? 'red' : coreColor} bold>
+                {msg.role === 'user' ? '❯ ' : msg.role === 'error' ? '✗ ' : '◆ '}
+              </Text>
+              <Text color="white">{msg.content.slice(0, 120)}</Text>
+            </Text>
+          </Box>
+        ))}
 
         {isProcessing && (
-          <Box flexDirection="column" marginTop={1}>
-            <Box>
-              <Text color={coreColor} bold>
-                <Spinner type="dots" /> FORGING...
-              </Text>
-            </Box>
-            <Box marginLeft={2} borderStyle="single" borderColor="gray" paddingX={1}>
-              <Text color="white">{currentOutput.slice(-200)}</Text>
-            </Box>
+          <Box flexDirection="column" marginTop={0}>
+            <Text color={coreColor} bold>
+              <Spinner type="dots" /> FORGING...
+            </Text>
+            <Text color="gray">{currentOutput.slice(-100)}</Text>
           </Box>
         )}
       </Box>
 
-      {/* FIXED FOOTER */}
-      <Box borderStyle="single" borderColor={bronzeColor} paddingX={1} flexShrink={0} height={footerHeight}>
+      {/* FIXED FOOTER - INPUT AREA */}
+      <Box borderStyle="round" borderColor={bronzeColor} paddingX={1} paddingY={0} flexShrink={0} height={footerHeight}>
         {isSelectingModel ? (
           <Box flexDirection="column">
-            <Text bold color="yellow">SELECT CORE MODEL:</Text>
+            <Text bold color="yellow">SELECT MODEL (CTRL+M to cancel):</Text>
             <SelectInput items={modelOptions} onSelect={handleModelSelect} />
           </Box>
         ) : (
@@ -207,15 +191,16 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
               value={input}
               onChange={setInput}
               onSubmit={handleSubmit}
-              placeholder={isPromptingKey ? `Enter ${pendingProvider} API Key...` : "Awaiting instructions..."}
+              placeholder={isPromptingKey ? `Enter ${pendingProvider} API Key...` : "Type command..."}
               mask={isPromptingKey ? "*" : undefined}
             />
           </Box>
         )}
       </Box>
-      
+
+      {/* HELP LINE */}
       <Box justifyContent="center" flexShrink={0}>
-        <Text color="gray">ESC: EXIT | CTRL+M: MENU | /model [name]: SWITCH</Text>
+        <Text color="gray" dimColor>ESC: EXIT | CTRL+M: MODEL | /model [name]: SWITCH</Text>
       </Box>
     </Box>
   );
