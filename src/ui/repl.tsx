@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { render, Text, Box, useInput, useApp, Static } from 'ink';
 import TextInput from 'ink-text-input';
 import SelectInput from 'ink-select-input';
@@ -37,7 +37,6 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
   const handleSubmit = async (value: string) => {
     if (isSelectingModel) return;
     
-    // Handle API Key Prompting
     if (isPromptingKey) {
       onKeyUpdate(pendingProvider, value);
       setIsPromptingKey(false);
@@ -49,7 +48,6 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
 
     if (!value.trim()) return;
 
-    // Handle /model command
     if (value.startsWith('/model ')) {
       const newModel = value.split(' ')[1];
       if (newModel) {
@@ -86,8 +84,6 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
     const provider = config.providers?.find(p => p.models.includes(modelName));
     if (provider) {
       onModelChange(modelName);
-      
-      // Check if the provider needs a key
       if (provider.name !== 'Ollama' && !provider.apiKey) {
         setIsPromptingKey(true);
         setPendingProvider(provider.name);
@@ -103,7 +99,6 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
     handleModelSwitch(item.value);
   };
 
-  // Dynamic Fire Theme based on provider
   const getFireColor = () => {
     const provider = config.providers?.find(p => p.isActive);
     switch (provider?.name) {
@@ -120,30 +115,48 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
   ) || [];
 
   return (
-    <Box flexDirection="column" padding={1}>
-      {/* Header Section - DYNAMIC FIRE THEME */}
-      <Box borderStyle="double" borderColor={fireColor} paddingX={2} marginBottom={1} flexDirection="column">
+    <Box flexDirection="column" height="100%">
+      {/* FIXED HEADER - FORGE DASHBOARD */}
+      <Box borderStyle="double" borderColor={fireColor} paddingX={2} flexDirection="column" flexShrink={0}>
         <Box justifyContent="space-between">
-          <Text bold color={fireColor}>
-            🔥 FORGE ENGINE v1.6.0
-          </Text>
-          <Box>
-            <Text color="yellow" bold>[CORE: </Text>
-            <Text color={fireColor} bold>{config.model.toUpperCase()}</Text>
-            <Text color="yellow" bold>]</Text>
+          <Box flexDirection="column">
+            <Text bold color={fireColor}>
+              {"  ______ ____  _____   _____ ______ "}
+            </Text>
+            <Text bold color={fireColor}>
+              {" |  ____/ __ \\|  __ \\ / ____|  ____|"}
+            </Text>
+            <Text bold color={fireColor}>
+              {" | |__ | |  | | |__) | |  __| |__   "}
+            </Text>
+            <Text bold color={fireColor}>
+              {" |  __|| |  | |  _  /| | |_ |  __|  "}
+            </Text>
+            <Text bold color={fireColor}>
+              {" | |   | |__| | | \\ \\| |__| | |____ "}
+            </Text>
+            <Text bold color={fireColor}>
+              {" |_|    \\____/|_|  \\_\\\\_____|______| v1.7.0 🔥"}
+            </Text>
           </Box>
-        </Box>
-        <Box marginTop={1} justifyContent="center">
-          <Text color="gray">────────────────────────────────────────────────────────────</Text>
-        </Box>
-        <Box marginTop={1} justifyContent="space-between">
-          <Text color="yellow">STATUS: <Text color="green" bold>READY</Text></Text>
-          <Text color={fireColor} bold>TYPE /model [name] TO SWITCH</Text>
+          <Box flexDirection="column" alignItems="flex-end">
+            <Box>
+              <Text color="yellow" bold>[CORE: </Text>
+              <Text color={fireColor} bold>{config.model.toUpperCase()}</Text>
+              <Text color="yellow" bold>]</Text>
+            </Box>
+            <Box marginTop={1}>
+              <Text color="yellow">STATUS: <Text color="green" bold>ONLINE</Text></Text>
+            </Box>
+            <Box marginTop={1}>
+              <Text color={fireColor} bold>TYPE /model [name] TO SWITCH</Text>
+            </Box>
+          </Box>
         </Box>
       </Box>
 
-      {/* History Section */}
-      <Box flexDirection="column" marginBottom={1}>
+      {/* SCROLLABLE CHAT AREA */}
+      <Box flexDirection="column" flexGrow={1} paddingX={2} marginTop={1}>
         <Static items={history}>
           {(msg, i) => (
             <Box key={i} flexDirection="column" marginBottom={1}>
@@ -156,52 +169,45 @@ const REPL: React.FC<Props> = ({ agent, config, onModelChange, onKeyUpdate }) =>
             </Box>
           )}
         </Static>
+
+        {/* Processing Indicator */}
+        {isProcessing && (
+          <Box flexDirection="column" marginTop={1}>
+            <Box>
+              <Text color={fireColor} bold>
+                <Spinner type="dots" /> FORGING RESPONSE...
+              </Text>
+            </Box>
+            <Box marginLeft={2} marginTop={1} borderStyle="single" borderColor="gray" paddingX={1}>
+              <Text color="white">{currentOutput}</Text>
+            </Box>
+          </Box>
+        )}
       </Box>
 
-      {/* Model Selection Dropdown */}
-      {isSelectingModel && (
-        <Box borderStyle="round" borderColor="yellow" padding={1} marginBottom={1} flexDirection="column">
-          <Text bold color="yellow">SELECT NEW CORE MODEL:</Text>
-          <Box marginTop={1}>
+      {/* FIXED FOOTER - INPUT AREA */}
+      <Box borderStyle="single" borderColor={fireColor} paddingX={1} flexShrink={0} marginTop={1}>
+        {isSelectingModel ? (
+          <Box flexDirection="column">
+            <Text bold color="yellow">SELECT NEW CORE MODEL:</Text>
             <SelectInput items={modelOptions} onSelect={handleModelSelect} />
           </Box>
-          <Box marginTop={1}>
-            <Text color="gray">Press CTRL+M again to cancel</Text>
-          </Box>
-        </Box>
-      )}
-
-      {/* Processing Indicator */}
-      {isProcessing && (
-        <Box marginBottom={1} flexDirection="column">
+        ) : (
           <Box>
-            <Text color={fireColor} bold>
-              <Spinner type="dots" /> FORGING RESPONSE...
-            </Text>
+            <Text color={fireColor} bold>{isPromptingKey ? 'KEY> ' : 'FORGE> '}</Text>
+            <TextInput
+              value={input}
+              onChange={setInput}
+              onSubmit={handleSubmit}
+              placeholder={isPromptingKey ? `Enter ${pendingProvider} API Key...` : "Awaiting instructions..."}
+              mask={isPromptingKey ? "*" : undefined}
+            />
           </Box>
-          <Box marginLeft={2} marginTop={1} borderStyle="single" borderColor="gray" paddingX={1}>
-            <Text color="white">{currentOutput}</Text>
-          </Box>
-        </Box>
-      )}
-
-      {/* Input Section */}
-      {!isProcessing && !isSelectingModel && (
-        <Box borderStyle="single" borderColor={fireColor} paddingX={1}>
-          <Text color={fireColor} bold>{isPromptingKey ? 'KEY> ' : 'FORGE> '}</Text>
-          <TextInput
-            value={input}
-            onChange={setInput}
-            onSubmit={handleSubmit}
-            placeholder={isPromptingKey ? `Enter ${pendingProvider} API Key...` : "Awaiting instructions..."}
-            mask={isPromptingKey ? "*" : undefined}
-          />
-        </Box>
-      )}
-
-      {/* Footer Section */}
-      <Box marginTop={1} justifyContent="center">
-        <Text color="gray">ESC: EXIT | /model [name]: SWITCH CORE | FORGE: UNIVERSAL AI ASSISTANT</Text>
+        )}
+      </Box>
+      
+      <Box justifyContent="center" flexShrink={0}>
+        <Text color="gray">ESC: EXIT | /model [name]: SWITCH CORE | CTRL+M: MENU</Text>
       </Box>
     </Box>
   );
